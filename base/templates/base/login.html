@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/form.js' %}" defer></script>
+</head>
+<body>
+    <section>
+        <!-- Contenedor de ondas generado dinámicamente -->
+        <div class="login">
+            <form method="POST" id="loginForm">
+                {% csrf_token %}
+                
+                <h2>Iniciar Sesión</h2>
+                <br>
+                <div class="inputBox">
+                    <input type="email" name="email" id="email" placeholder="Correo electrónico" required>
+                    <span class="focus-border"></span>
+                </div>
+                <div class="inputBox">
+                    <input type="password" name="password" id="password" placeholder="Contraseña" required>
+                    <span class="focus-border"></span>
+                </div>
+                <div class="inputBox">
+                    <button id="btn" type="submit">Entrar</button>
+                </div>
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </section>
+</body>
+</html>

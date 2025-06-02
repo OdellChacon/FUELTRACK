@@ -1,0 +1,449 @@
+<!-- filepath: c:\Users\Odell Chacón\Downloads\FuelTrack\gestion\templates\gestion\lista_estaciones.html -->
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container mx-auto mt-8">
+    <h2 class="text-2xl font-bold text-center mb-6">Listado de gestiones de estaciones</h2>
+    <div class="flex flex-col gap-4 mb-6">
+        <div class="flex justify-between items-center">
+            <div class="flex gap-4 items-center">
+                <a href="{% url 'registrar_estacion' %}" class="bg-green-500 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600">
+                    <i class="bx bx-user-plus"></i>
+                    <span>Nueva</span>
+                </a>
+                <!-- Botón Importar -->
+                <button class="bg-yellow-500 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-600" onclick="openModalGestiones('import')">
+                    <i class="bx bx-import"></i>
+                    <span>Importar</span>
+                </button>
+                <!-- Botón Exportar -->
+                <button id="exportButton" class="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600" onclick="openModalGestiones('export')">
+                    <i class="bx bx-export"></i>
+                    <span>Exportar</span>
+                </button>
+            </div>
+            <div class="flex gap-2 items-center">
+                <!-- NUEVO: Filtros de mes y año -->
+                <form method="get" id="filtroMesAnio" class="flex gap-2 items-center">
+                    <select name="mes" id="mesSelect" class="border rounded px-2 py-1">
+                        {% for m, nombre in meses %}
+                            <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="anio" id="anioSelect" class="border rounded px-2 py-1">
+                        {% for y in anios %}
+                            <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Buscar por nombre..."
+                    class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+            </div>
+        </div>
+        <button id="deleteSelectedButton" class="bg-red-500 text-white text-sm px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-600 hidden shadow-md transform transition-transform hover:scale-105" onclick="deleteSelected()">
+            <i class="bx bx-trash text-base"></i>
+            <span>Eliminar Todo</span>
+        </button>
+    </div>
+    <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow text-center text-xs" id="gestionesTable">
+            <thead class="bg-gradient-to-r from-blue-400 to-blue-200 text-white uppercase text-xs">
+                <tr>
+                    <th class="px-2 py-3 text-center">
+                        <input type="checkbox" id="selectAll" class="form-checkbox h-5 w-5 text-blue-600">
+                    </th>
+                    <th class="px-2 py-3 text-center">ID</th>
+                    <th class="px-2 py-3 text-center">MERCADO</th>
+                    <th class="px-2 py-3 text-center">NOMBRE</th>
+                    <th class="px-2 py-3 text-center">CONSUMO</th>
+                    <th class="px-2 py-3 text-center">TOTAL</th>
+                    <th class="px-2 py-3 text-center">DISPONIBLE (LTS)</th>
+                    <th class="px-2 py-3 text-center">NIVEL</th>
+                    <th class="px-2 py-3 text-center">AUTONOMIA</th>
+                    <th class="px-2 py-3 text-center">HRS TOTALES</th>
+                    <th class="px-2 py-3 text-center">PORCENTAJE</th>
+                    <th class="px-2 py-3 text-center">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gestion in gestiones %}
+                <tr class="border-t hover:bg-gray-50" data-id="{{ gestion.id }}">
+                    <td class="px-2 py-2 text-center">
+                        <input type="checkbox" class="selectRow form-checkbox h-5 w-5 text-blue-600" data-id="{{ gestion.id }}">
+                    </td>
+                    <td class="px-2 py-2 text-center font-semibold">{{ gestion.estacion.id }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.estacion.mercado }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.estacion.nombre }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.estacion.consumo|floatformat:1 }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.estacion.total|floatformat:0 }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.disponible|floatformat:0 }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.nivel_combustible|floatformat:0 }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.autonomia_hrs|floatformat:0 }}</td>
+                    <td class="px-2 py-2 text-center">{{ gestion.hrs_total|floatformat:0 }}</td>
+                    <td class="px-2 py-2 text-center w-32">
+                        {% with porcentaje_100=gestion.porcentaje_100|default:0 %}
+                        <div class="flex flex-col items-center">
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="h-4 rounded-full transition-all duration-500
+                                    {% if porcentaje_100 < 30 %}bg-red-500
+                                    {% elif porcentaje_100 < 70 %}bg-yellow-400
+                                    {% else %}bg-green-500{% endif %}"
+                                    style="width:{{ porcentaje_100 }}%;">
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold mt-1">{{ porcentaje_100|floatformat:1 }}%</span>
+                        </div>
+                        {% endwith %}
+                    </td>
+                    <td class="px-2 py-2 text-center">
+                        <div class="flex justify-center gap-2">
+                            <a href="{% url 'detalle_gestion_estacion' gestion.pk %}" class="bg-blue-500 text-white text-sm px-3 py-2 rounded-lg flex items-center justify-center w-10 h-10 hover:bg-blue-600 shadow transition-transform hover:scale-105" title="Ver">
+                                <i class="bx bx-show text-lg"></i>
+                            </a>
+                            <a href="{% url 'editar_gestion_estacion' gestion.pk %}" class="bg-yellow-500 text-white text-sm px-3 py-2 rounded-lg flex items-center justify-center w-10 h-10 hover:bg-yellow-600 shadow transition-transform hover:scale-105" title="Editar">
+                                <i class="bx bx-edit text-lg"></i>
+                            </a>
+                            <button class="bg-red-500 text-white text-sm px-3 py-2 rounded-lg flex items-center justify-center w-10 h-10 hover:bg-red-600 shadow transition-transform hover:scale-105" onclick="confirmDelete({{ gestion.id }})" title="Eliminar">
+                                <i class="bx bx-trash text-lg"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11">No hay gestiones registradas para este mes y año.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+    </div>
+</div>
+
+<!-- Modal de formatos para gestiones -->
+<div id="modalFormatGestiones" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden" onclick="closeModalGestiones()">
+    <div id="modalContentGestiones" class="bg-white p-6 rounded-lg shadow-lg w-[450px]" onclick="event.stopPropagation()">
+        <h3 id="modalTitleGestiones" class="text-xl font-semibold mb-4 text-center">Exportar Formatos</h3>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="btn-format bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer" data-format="csv" onclick="handleActionGestiones('csv')">
+                <i class="bx bx-file text-2xl"></i> CSV
+            </div>
+            <div class="btn-format bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer" data-format="excel" onclick="handleActionGestiones('excel')">
+                <i class="bx bx-file text-2xl"></i> Excel
+            </div>
+            <div class="btn-format bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer" data-format="json" onclick="handleActionGestiones('json')">
+                <i class="bx bx-file text-2xl"></i> JSON
+            </div>
+            <div class="btn-format bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer" data-format="xml" onclick="handleActionGestiones('xml')">
+                <i class="bx bx-file text-2xl"></i> XML
+            </div>
+            <div class="btn-format bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer" data-format="pdf" onclick="handleActionGestiones('pdf')">
+                <i class="bx bx-file text-2xl"></i> PDF
+            </div>
+            <div class="btn-format bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-lg flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer" data-format="sql" onclick="handleActionGestiones('sql')">
+                <i class="bx bx-file text-2xl"></i> SQL
+            </div>
+        </div>
+        <div class="mt-4 text-center">
+            <button class="btn-cancel bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg" onclick="closeModalGestiones()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const rowCheckboxes = document.querySelectorAll('.selectRow');
+        const deleteSelectedButton = document.getElementById('deleteSelectedButton');
+
+        // Seleccionar/Deseleccionar todos los checkboxes
+        selectAllCheckbox.addEventListener('change', () => {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+            toggleDeleteButton();
+        });
+
+        // Mostrar/Ocultar el botón de "Eliminar Seleccionados"
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                toggleDeleteButton();
+                if (!checkbox.checked) {
+                    selectAllCheckbox.checked = false;
+                }
+            });
+        });
+
+        function toggleDeleteButton() {
+            const anyChecked = Array.from(rowCheckboxes).some(checkbox => checkbox.checked);
+            deleteSelectedButton.style.display = anyChecked ? 'block' : 'none';
+        }
+
+        // Abrir modal
+        window.openModalGestiones = (type) => {
+            const modal = document.getElementById('modalFormatGestiones');
+            const modalTitle = document.getElementById('modalTitleGestiones');
+            if (type === 'import') {
+                modalTitle.textContent = 'Seleccione el formato de Importación';
+                modal.setAttribute('data-action', 'import');
+            } else if (type === 'export') {
+                modalTitle.textContent = 'Seleccione el formato de Exportación';
+                modal.setAttribute('data-action', 'export');
+            }
+            modal.classList.remove('hidden');
+        };
+
+        // Cerrar modal
+        window.closeModalGestiones = () => {
+            document.getElementById('modalFormatGestiones').classList.add('hidden');
+        };
+
+        // Manejar exportación/importación
+        window.handleActionGestiones = (format) => {
+            const modal = document.getElementById('modalFormatGestiones');
+            const action = modal.getAttribute('data-action');
+            if (action === 'import') {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = getAcceptFormatGestiones(format);
+                input.onchange = () => handleImportGestiones(input.files[0]);
+                input.click();
+            } else if (action === 'export') {
+                window.location.href = `/gestion/exportar/${format}/`;
+            }
+        };
+
+        function getAcceptFormatGestiones(format) {
+            const formats = {
+                csv: '.csv',
+                excel: '.xls,.xlsx',
+                sql: '.sql',
+                json: '.json',
+                xml: '.xml',
+                pdf: '.pdf'
+            };
+            return formats[format] || '';
+        }
+
+        function handleImportGestiones(file) {
+            const form = new FormData();
+            form.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            form.append('file', file);
+            // Añade mes y año seleccionados al importar
+            form.append('mes', document.getElementById('mesSelect').value);
+            form.append('anio', document.getElementById('anioSelect').value);
+
+            fetch('{% url "importar_gestiones" %}', {
+                method: 'POST',
+                body: form
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    response.text().then(text => alert('Error al importar el archivo: ' + text));
+                }
+            })
+            .catch(error => {
+                alert('Hubo un error al procesar el archivo: ' + error.message);
+            });
+        }
+
+        // Eliminar registros seleccionados
+        window.deleteSelected = () => {
+            const selectedIds = Array.from(rowCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.dataset.id);
+
+            if (selectedIds.length === 0) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se ha seleccionado ningún registro.',
+                    icon: 'error',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: `Se eliminarán ${selectedIds.length} registros.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('{% url "eliminar_gestiones" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ ids: selectedIds })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            selectedIds.forEach(id => {
+                                const row = document.querySelector(`tr[data-id="${id}"]`);
+                                if (row) row.remove();
+                            });
+                            Swal.fire({
+                                title: 'Eliminados',
+                                text: 'Los registros seleccionados han sido eliminados.',
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                            selectAllCheckbox.checked = false;
+                            toggleDeleteButton();
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message,
+                                icon: 'error',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+                    });
+                }
+            });
+        };
+
+        // Búsqueda dinámica por ID o NOMBRE
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('gestionesTable');
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.trim().toLowerCase();
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                if (row.querySelector('td[colspan]')) {
+                    row.style.display = '';
+                    return;
+                }
+                const idCell = row.children[1];
+                const nombreCell = row.children[3];
+                const idText = idCell ? idCell.textContent.trim().toLowerCase() : '';
+                const nombreText = nombreCell ? nombreCell.textContent.trim().toLowerCase() : '';
+                if (!filter || idText.includes(filter) || nombreText.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Inicializar sin paginación
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => row.style.display = '');
+
+        // Recargar al cambiar mes o año
+        document.getElementById('mesSelect').addEventListener('change', function() {
+            document.getElementById('filtroMesAnio').submit();
+        });
+        document.getElementById('anioSelect').addEventListener('change', function() {
+            document.getElementById('filtroMesAnio').submit();
+        });
+    });
+
+    // Confirmar eliminación individual
+    function getCSRFToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === ('csrftoken=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    window.confirmDelete = function(id) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/gestion/eliminar/${id}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken(),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const row = document.querySelector(`tr[data-id="${id}"]`);
+                        if (row) {
+                            row.remove();
+                        }
+                        Swal.fire({
+                            title: 'Eliminado',
+                            text: data.message || 'Eliminado correctamente.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: data.message || 'No se pudo eliminar.',
+                            icon: 'error',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end'
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: error.message || 'Error de red o CSRF.',
+                        icon: 'error',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

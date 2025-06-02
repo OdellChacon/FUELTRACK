@@ -1,0 +1,417 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+/* Fondo principal */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: #ffffff; /* Fondo blanco */
+}
+
+section {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: #ffffff; /* Fondo blanco */
+}
+
+.leaves {
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.leaves .set {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.leaves .set .leaf {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    animation: animate 20s linear infinite;
+}
+
+.leaves .set .leaf:nth-child(1) {
+    left: 20%;
+    animation-duration: 20s;
+}
+
+.leaves .set .leaf:nth-child(2) {
+    left: 50%;
+    animation-duration: 14s;
+}
+
+.leaves .set .leaf:nth-child(3) {
+    left: 70%;
+    animation-duration: 12s;
+}
+
+.leaves .set .leaf:nth-child(4) {
+    left: 5%;
+    animation-duration: 15s;
+}
+
+.leaves .set .leaf:nth-child(5) {
+    left: 85%;
+    animation-duration: 18s;
+}
+
+@keyframes animate {
+    0% {
+        opacity: 0;
+        top: -10%;
+        transform: translateX(20px) rotate(0deg);
+    }
+    10% {
+        opacity: 1;
+    }
+    100% {
+        top: 110%;
+        transform: translateX(-20px) rotate(360deg);
+    }
+}
+
+.animated-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #007BFF, #00C6FF);
+    background-size: 400% 400%;
+    animation: gradientAnimation 10s ease infinite;
+    z-index: -1;
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Contenedor de glassmorphism */
+.glass-container {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 20px;
+    width: 300px;
+    text-align: center;
+}
+
+.glass-container h2 {
+    color: #007BFF;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #007BFF;
+    border-radius: 5px;
+    outline: none;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.messages p {
+    color: red;
+    font-size: 14px;
+}
+
+/* Contenedor del formulario */
+.login {
+    position: relative;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.2); /* Fondo translúcido */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.login h2 {
+    text-align: center;
+    font-size: 2em;
+    font-weight: 600;
+    color: #007BFF; /* Azul para el título */
+}
+
+.login .inputBox {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.login .inputBox input {
+    width: 100%;
+    padding: 15px 20px;
+    outline: none;
+    font-size: 1em;
+    color: #333; /* Texto oscuro */
+    border-radius: 5px;
+    background: #f9f9f9; /* Fondo claro */
+    border: 1px solid #ccc; /* Borde gris */
+    transition: all 0.3s ease;
+}
+
+.login .inputBox input:focus {
+    border: 1px solid #007BFF; /* Azul en foco */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.login .inputBox .focus-border {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #007BFF; /* Azul */
+    transition: 0.4s;
+}
+
+.login .inputBox input:focus ~ .focus-border {
+    width: 100%;
+}
+
+.login .inputBox #btn {
+    width: 100%;
+    padding: 15px;
+    background: #007BFF; /* Azul */
+    color: #fff; /* Texto blanco */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.login .inputBox #btn:hover {
+    background: #0056b3; /* Azul más oscuro */
+}
+
+.messages p {
+    color: red;
+    font-size: 14px;
+}
+
+/* Fondo de ondas */
+.wave-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.wave {
+    position: absolute;
+    bottom: 0;
+    width: 200%;
+    height: 15%;
+    background: rgba(0, 123, 255, 0.5); /* Azul translúcido */
+    border-radius: 50%;
+    animation: wave-flow 5s infinite ease-in-out;
+    opacity: 0.8;
+}
+
+.wave:nth-child(2) {
+    background: rgba(0, 123, 255, 0.3); /* Azul más claro */
+    animation-duration: 6s;
+    animation-delay: -2s;
+}
+
+.wave:nth-child(3) {
+    background: rgba(0, 123, 255, 0.2); /* Azul aún más claro */
+    animation-duration: 7s;
+    animation-delay: -4s;
+}
+
+@keyframes wave-flow {
+    0% {
+        transform: translateX(0) translateY(0);
+    }
+    50% {
+        transform: translateX(-25%) translateY(10px);
+    }
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2); /* Fondo translúcido */
+    backdrop-filter: blur(10px); /* Efecto de desenfoque */
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+}
+
+#sidebar h2 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #007BFF;
+    text-align: center;
+}
+
+#sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+#sidebar ul li {
+    margin: 15px 0;
+}
+
+#sidebar ul li a {
+    color: #000; /* Texto negro */
+    text-decoration: none;
+    font-size: 14px; /* Reducido de 16px a 14px */
+    padding: 8px 12px; /* Ajustado para ahorrar espacio */
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Reducido el espacio entre ícono y texto */
+    border-radius: 5px;
+    background-color: transparent; /* Sin fondo */
+    transition: color 0.3s ease;
+}
+
+#sidebar ul li a:hover {
+    color: #007BFF; /* Azul en hover */
+}
+
+#sidebar ul li a i {
+    color: #007BFF; /* Azul para los íconos */
+    font-size: 18px; /* Reducido de 20px a 18px */
+    transition: color 0.3s ease;
+    display: inline-block; /* Asegúrate de que los íconos se muestren correctamente */
+}
+
+#sidebar ul li a:hover i {
+    color: #0056b3; /* Azul más oscuro en hover */
+}
+
+#sidebar ul li.sidebar-section {
+    font-size: 14px;
+    font-weight: bold;
+    color: #007BFF; /* Azul para las secciones */
+    margin: 20px 0 10px; /* Espaciado superior e inferior */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-left: 10px; /* Alineación con los botones */
+}
+
+#main-content {
+    position: absolute; /* Permite que el contenido ignore el flujo del diseño */
+    top: 0;
+    left: 0;
+    width: 100%; /* Ocupa todo el ancho */
+    height: 100vh; /* Ocupa toda la altura de la pantalla */
+    padding: 20px;
+    background-color: #ffffff; /* Fondo blanco */
+    overflow: auto; /* Permite scroll si el contenido es muy grande */
+    display: flex;
+    flex-direction: column;
+    z-index: 0; /* Asegura que el contenido no quede detrás de otros elementos */
+}
+
+#main-content h1 {
+    margin-bottom: 20px;
+    font-size: 2em;
+    color: #333;
+}
+
+.cards {
+    display: flex; /* Alinea las tarjetas en fila */
+    gap: 20px; /* Espaciado entre las tarjetas */
+    flex-wrap: wrap; /* Permite que las tarjetas se ajusten en varias filas si no hay espacio */
+    justify-content: center; /* Centra las tarjetas horizontalmente */
+    margin-bottom: 20px; /* Espaciado inferior */
+}
+
+.card {
+    flex: 1 1 calc(25% - 20px); /* Cada tarjeta ocupa el 25% del ancho menos el espacio del gap */
+    max-width: 300px; /* Ancho máximo para las tarjetas */
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}

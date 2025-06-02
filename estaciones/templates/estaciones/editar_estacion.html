@@ -1,0 +1,191 @@
+{% extends 'base/base.html' %}
+{% block title %}Editar Estación{% endblock %}
+{% load widget_tweaks %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container mx-auto mt-8">
+    <h2 class="text-2xl font-bold text-center mb-6">Editar Estación</h2>
+    <form method="post" class="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto space-y-6">
+        {% csrf_token %}
+        
+        <!-- Información General -->
+        <div>
+            <h3 class="text-lg font-semibold mb-4">Información General</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    {{ form.id.label_tag }}
+                    {{ form.id|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.region.label_tag }}
+                    {{ form.region|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.mercado.label_tag }}
+                    {{ form.mercado|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.nombre.label_tag }}
+                    {{ form.nombre|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.distribuidora.label_tag }}
+                    {{ form.distribuidora|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.tipo_estacion.label_tag }}
+                    {{ form.tipo_estacion|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles Técnicos -->
+        <div>
+            <h3 class="text-lg font-semibold mb-4">Detalles Técnicos</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    {{ form.estado.label_tag }}
+                    {{ form.estado|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.marca.label_tag }}
+                    {{ form.marca|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.modelo.label_tag }}
+                    {{ form.modelo|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.serial.label_tag }}
+                    {{ form.serial|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.capacidad.label_tag }}
+                    {{ form.capacidad|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.consumo.label_tag }}
+                    {{ form.consumo|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Tanques -->
+        <div>
+            <h3 class="text-lg font-semibold mb-4">Configuración de Tanques</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    {{ form.pac.label_tag }}
+                    {{ form.pac|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.tanque_base.label_tag }}
+                    {{ form.tanque_base|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.tanque_externo.label_tag }}
+                    {{ form.tanque_externo|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    <label for="total" class="block text-sm font-medium text-gray-700">Total</label>
+                    <input type="text" id="total" value="{{ form.instance.total }}" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-100" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Otros Detalles -->
+        <div>
+            <h3 class="text-lg font-semibold mb-4">Otros Detalles</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    {{ form.capacidad_anterior.label_tag }}
+                    {{ form.capacidad_anterior|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+                <div>
+                    {{ form.compens.label_tag }}
+                    {{ form.compens|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                    <small class="text-gray-500">Este campo es opcional.</small>
+                </div>
+                <div>
+                    <label for="nivel_total" class="block text-sm font-medium text-gray-700">Nivel Total</label>
+                    <input type="text" id="nivel_total" value="{{ form.instance.nivel_total }}" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-100" readonly>
+                </div>
+                <div>
+                    <label for="{{ form.cinco_min.id_for_label }}" class="block text-sm font-medium text-gray-700">5 min</label>
+                    <input type="text" id="cinco_min" value="{{ form.instance.cinco_min }}" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-100" readonly>
+                </div>
+                <div>
+                    <label for="{{ form.diez_min.id_for_label }}" class="block text-sm font-medium text-gray-700">10 min</label>
+                    <input type="text" id="diez_min" value="{{ form.instance.diez_min }}" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-100" readonly>
+                </div>
+                <div>
+                    <label for="{{ form.veinte_min.id_for_label }}" class="block text-sm font-medium text-gray-700">20 min</label>
+                    <input type="text" id="veinte_min" value="{{ form.instance.veinte_min }}" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-100" readonly>
+                </div>
+                <div>
+                    {{ form.fecha.label_tag }}
+                    {{ form.fecha|add_class:"w-full border border-gray-300 rounded-lg p-2" }}
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+            Guardar Cambios
+        </button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tanqueBaseInput = document.querySelector('[name="tanque_base"]');
+        const tanqueExternoInput = document.querySelector('[name="tanque_externo"]');
+        const totalInput = document.getElementById('total');
+        const capacidadAnteriorInput = document.querySelector('[name="capacidad_anterior"]');
+        const compensInput = document.querySelector('[name="compens"]');
+        const nivelTotalInput = document.getElementById('nivel_total');
+        const consumoInput = document.querySelector('[name="consumo"]');
+        const cincoMinInput = document.getElementById('cinco_min');
+        const diezMinInput = document.getElementById('diez_min');
+        const veinteMinInput = document.getElementById('veinte_min');
+
+        function updateCalculations() {
+            const tanqueBase = parseFloat(tanqueBaseInput.value) || 0;
+            const tanqueExterno = parseFloat(tanqueExternoInput.value) || 0;
+            const capacidadAnterior = parseFloat(capacidadAnteriorInput.value) || 0;
+            const compens = parseFloat(compensInput.value) || 0;
+            const consumo = parseFloat(consumoInput.value) || 0;
+
+            totalInput.value = (tanqueBase + tanqueExterno).toFixed(2);
+            nivelTotalInput.value = (capacidadAnterior + compens).toFixed(2);
+            cincoMinInput.value = ((5 / 60) * consumo).toFixed(2);
+            diezMinInput.value = ((10 / 60) * consumo).toFixed(2);
+            veinteMinInput.value = ((20 / 60) * consumo).toFixed(2);
+        }
+
+        [tanqueBaseInput, tanqueExternoInput, capacidadAnteriorInput, compensInput, consumoInput].forEach(input => {
+            input.addEventListener('input', updateCalculations);
+        });
+    });
+</script>
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+    {% if forloop.first %}
+    Swal.fire({
+        title: 'Éxito',
+        text: '{{ message }}',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+    });
+    {% endif %}
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}

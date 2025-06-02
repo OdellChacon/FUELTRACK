@@ -1,0 +1,95 @@
+<!-- filepath: c:\Users\Odell Chacón\Downloads\FuelTrack\base\templates\base\base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'usuarios/css/usuarios.css' %}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="{% static 'js/sidebar.js' %}" defer></script>
+</head>
+<body class="bg-white min-h-screen">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-white text-blue-900 flex-shrink-0 shadow-xl flex flex-col border-r border-gray-200">
+            <div class="flex items-center gap-2 px-6 py-6 border-b border-gray-200">
+                <i class="bx bxs-dashboard text-3xl text-yellow-400"></i>
+                <span class="text-2xl font-bold tracking-wide">FuelTrack</span>
+            </div>
+            <nav class="flex-1 px-4 py-6">
+                <ul class="space-y-2">
+                    <!-- Inicio -->
+                    <li>
+                        <a href="/dashboard" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-blue-50 transition text-blue-900 font-medium">
+                            <i class="bx bx-home text-xl"></i>
+                            <span class="font-medium">Inicio</span>
+                        </a>
+                    </li>
+                    <!-- Modulos -->
+                    <li class="mt-6 mb-1 text-xs uppercase tracking-wider text-blue-400 font-semibold pl-4">Módulos</li>
+                    <li>
+                        <a href="/stations" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-yellow-50 transition text-blue-900">
+                            <i class="bx bx-gas-pump text-xl text-yellow-400"></i>
+                            <span>Estaciones</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/users" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-green-50 transition text-blue-900">
+                            <i class="bx bx-group text-xl text-green-400"></i>
+                            <span>Usuarios</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/management" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-purple-50 transition text-blue-900">
+                            <i class="bx bx-briefcase text-xl text-purple-400"></i>
+                            <span>Gestión</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/audit" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-pink-50 transition text-blue-900">
+                            <i class="bx bx-search-alt text-xl text-pink-400"></i>
+                            <span>Auditoría</span>
+                        </a>
+                    </li>
+                    <!-- Opciones -->
+                    <li class="mt-6 mb-1 text-xs uppercase tracking-wider text-blue-400 font-semibold pl-4">Opciones</li>
+                    <li>
+                        <a href="/profile" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-blue-50 transition text-blue-900">
+                            <i class="bx bx-user text-xl text-blue-400"></i>
+                            <span>Perfil</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/settings" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-blue-900">
+                            <i class="bx bx-cog text-xl text-gray-400"></i>
+                            <span>Configuración</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-red-50 transition text-blue-900">
+                            <i class="bx bx-log-out text-xl text-red-400"></i>
+                            <span>Cerrar sesión</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center gap-2 text-blue-400 text-xs">
+                <i class="bx bx-info-circle"></i>
+                <span>Versión 1.0 • PowerBI Style</span>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 p-8 bg-white overflow-x-auto">
+            {% block content %}
+            <!-- Contenido dinámico aquí -->
+            {% endblock %}
+        </main>
+    </div>
+</body>
+</html>

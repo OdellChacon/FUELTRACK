@@ -1,0 +1,429 @@
+{% extends "base/base.html" %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<div class="container mx-auto mt-8">
+    <h2 class="text-3xl font-bold text-center mb-10 text-blue-700">
+        DATA - {{ gestion.estacion.nombre }}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Tarjeta: Porcentaje de combustible -->
+        <div class="bg-gradient-to-br from-green-400 to-green-600 rounded-xl shadow-lg p-6 flex flex-col items-center">
+            <div class="text-white text-lg font-semibold mb-2">Porcentaje de Combustible</div>
+            <div class="w-full">
+                <div class="w-full bg-gray-200 rounded-full h-6 mb-2">
+                    {% with porcentaje_100=gestion.porcentaje_100|default:0 %}
+                    <div class="h-6 rounded-full transition-all duration-500
+                        {% if porcentaje_100 < 30 %}bg-red-500
+                        {% elif porcentaje_100 < 70 %}bg-yellow-400
+                        {% else %}bg-green-400{% endif %}"
+                        style="width:{{ porcentaje_100 }}%;">
+                    </div>
+                    {% endwith %}
+                </div>
+                <div class="text-center text-white text-2xl font-bold" id="porcentaje-barra">
+                    {{ gestion.porcentaje_100|floatformat:1 }}%
+                </div>
+            </div>
+        </div>
+        <!-- Tarjeta: Disponible y Total -->
+        <div class="bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg p-6 flex flex-col items-center">
+            <div class="text-white text-lg font-semibold mb-2">Disponible</div>
+            <div class="flex flex-col items-center">
+                <span class="text-3xl font-bold text-white">{{ gestion.disponible|floatformat:0 }} Lts</span>
+                <span class="text-white text-sm mt-1">En el Tanque de Reserva</span>
+            </div>
+        </div>
+        <!-- Tarjeta: Autonomía -->
+        <div class="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl shadow-lg p-6 flex flex-col items-center">
+            <div class="text-white text-lg font-semibold mb-2">Autonomía</div>
+            <div class="flex flex-col items-center">
+                <span class="text-3xl font-bold text-white" id="autonomia-hrs">{{ gestion.autonomia_hrs|floatformat:0 }}</span>
+                <span class="text-white text-sm mt-1">Horas</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de datos clave -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border-l-4 border-blue-500">
+            <div class="text-xs text-gray-400 uppercase mb-1">Consumo</div>
+            <div class="text-xl font-bold text-blue-700">
+                <input id="consumo-input" type="number" step="0.01" min="0"
+                       value="{{ gestion.estacion.consumo }}"
+                       class="w-24 text-center rounded-lg bg-white-100 border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none"
+                       style="box-shadow: none;" />
+                <span>Lts</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border-l-4 border-green-500">
+            <div class="text-xs text-gray-400 uppercase mb-1">Nivel</div>
+            <div class="text-xl font-bold text-green-700" id="nivel-combustible">{{ gestion.nivel_combustible|floatformat:0 }} Lts</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border-l-4 border-yellow-500">
+            <div class="text-xs text-gray-400 uppercase mb-1">Capacidad Anterior</div>
+            <div class="text-xl font-bold text-yellow-700" id="capacidad-anterior">{{ gestion.estacion.capacidad_anterior|floatformat:0 }} Lts</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border-l-4 border-red-500">
+            <div class="text-xs text-gray-400 uppercase mb-1">Necesario para 100%</div>
+            <div class="text-xl font-bold text-red-700" id="necesario-100">{{ gestion.necesario_100|floatformat:0 }} Lts</div>
+        </div>
+    </div>
+
+    <!-- Información general -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
+                        <i class="bx bx-hash text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">ID</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.id }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-green-100 text-green-600 rounded-full p-2">
+                        <i class="bx bx-map text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Región</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.region }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-yellow-100 text-yellow-600 rounded-full p-2">
+                        <i class="bx bx-store text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Mercado</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.mercado }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-purple-100 text-purple-600 rounded-full p-2">
+                        <i class="bx bx-building-house text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Estación</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.nombre }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
+                        <i class="bx bx-gas-pump text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Tanque Base</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.tanque_base }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-green-100 text-green-600 rounded-full p-2">
+                        <i class="bx bx-gas-pump text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Tanque Externo</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.tanque_externo }}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block bg-yellow-100 text-yellow-600 rounded-full p-2">
+                        <i class="bx bx-bar-chart-alt text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Total</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.total }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Datos semanales y otros -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+        <h3 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
+            <i class="bx bx-gas-pump text-2xl"></i>
+            Datos Semanales
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs text-gray-700 divide-y divide-gray-200">
+                <thead>
+                    <tr class="bg-blue-100 text-blue-700 uppercase tracking-wider">
+                        <th class="py-3 px-4 text-center">Semana</th>
+                        <th class="py-3 px-4 text-center">Suministro</th>
+                        <th class="py-3 px-4 text-center">Horas Trabajo</th>
+                        <th class="py-3 px-4 text-center">Promedio Diario</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
+                            <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 1</span>
+                        </td>
+                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w19|floatformat:0 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w19|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w19|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
+                            <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 2</span>
+                        </td>
+                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w20|floatformat:0 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w20|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w20|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
+                            <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 3</span>
+                        </td>
+                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w21|floatformat:0 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w21|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w21|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
+                            <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 4</span>
+                        </td>
+                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w22|floatformat:0 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w22|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w22|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div class="flex items-center gap-2 bg-white rounded-lg p-3 shadow">
+                <span class="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
+                    <i class="bx bx-time-five text-lg"></i>
+                </span>
+                <div>
+                    <div class="text-xs text-gray-400 uppercase mb-1">Horas Total</div>
+                    <div class="font-semibold text-gray-800 mb-1">{{ gestion.hrs_total|floatformat:2 }}</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 bg-white rounded-lg p-3 shadow">
+                <span class="inline-block bg-green-100 text-green-600 rounded-full p-2">
+                    <i class="bx bx-bar-chart text-lg"></i>
+                </span>
+                <div>
+                    <div class="text-xs text-gray-400 uppercase mb-1">Horas Promedio Mensual</div>
+                    <div class="font-semibold text-gray-800 mb-1">{{ gestion.hrs_promedio_mensual|floatformat:2 }}</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 bg-white rounded-lg p-3 shadow">
+                <span class="inline-block bg-yellow-100 text-yellow-600 rounded-full p-2">
+                    <i class="bx bx-gas-pump text-lg"></i>
+                </span>
+                <div>
+                    <div class="text-xs text-gray-400 uppercase mb-1">Nivel de Combustible</div>
+                    <div class="font-semibold text-gray-800 mb-1">{{ gestion.nivel_combustible }} Lts</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 bg-white rounded-lg p-3 shadow">
+                <span class="inline-block bg-purple-100 text-purple-600 rounded-full p-2">
+                    <i class="bx bx-comment-detail text-lg"></i>
+                </span>
+                <div>
+                    <div class="text-xs text-gray-400 uppercase mb-1">Observaciones</div>
+                    <div class="font-semibold text-gray-800 mb-1">{{ gestion.observaciones }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proyecciones -->
+    <div class="bg-white rounded-xl shadow p-6 mb-8">
+        <h3 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
+            <i class="bx bx-line-chart text-2xl"></i>
+            Proyecciones
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">24 Hrs (Vacío)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="vacio-24">{{ gestion.vacio_24|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">24 Hrs (Real)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="real-24">{{ gestion.real_24|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">36 Hrs (Vacío)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="vacio-36">{{ gestion.vacio_36|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">36 Hrs (Real)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="real-36">{{ gestion.real_36|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">48 Hrs (Vacío)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="vacio-48">{{ gestion.vacio_48|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">48 Hrs (Real)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="real-48">{{ gestion.real_48|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">72 Hrs (Vacío)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="vacio-72">{{ gestion.vacio_72|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">72 Hrs (Real)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="real-72">{{ gestion.real_72|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">96 Hrs (Vacío)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="vacio-96">{{ gestion.vacio_96|floatformat:0 }}</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 flex flex-col items-center shadow hover:shadow-md transition">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="bx bx-timer text-blue-400"></i>
+                    <span class="text-xs text-gray-400 uppercase">96 Hrs (Real)</span>
+                </div>
+                <div class="font-semibold text-blue-800 text-lg" id="real-96">{{ gestion.real_96|floatformat:0 }}</div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <!-- Histórico de Alarmas -->
+    <div class="bg-white-50 rounded-xl shadow p-6 mb-8">
+        <h3 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
+            <i class="bx bx-alarm-exclamation text-2xl"></i>
+            Histórico de Alarmas
+        </h3>
+        <div class="text-gray-400">
+            <!-- Aquí puedes mostrar el contenido del histórico de alarmas -->
+            {% if gestion.historico_alarmas %}
+                {{ gestion.historico_alarmas }}
+            {% else %}
+                No hay alarmas registradas.
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-8 flex justify-end">
+        <a href="{% url 'lista_estaciones' %}" class="inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-700 transition font-semibold">
+            <i class="bx bx-arrow-back text-lg"></i>
+            Volver
+        </a>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const consumoInput = document.getElementById('consumo-input');
+    // IDs de los campos dependientes
+    const nivelCombustible = document.getElementById('nivel-combustible');
+    const autonomiaHrs = document.getElementById('autonomia-hrs');
+    const necesario100 = document.getElementById('necesario-100');
+    const porcentajeBarra = document.getElementById('porcentaje-barra');
+    const vacio24 = document.getElementById('vacio-24');
+    const real24 = document.getElementById('real-24');
+    const vacio36 = document.getElementById('vacio-36');
+    const real36 = document.getElementById('real-36');
+    const vacio48 = document.getElementById('vacio-48');
+    const real48 = document.getElementById('real-48');
+    const vacio72 = document.getElementById('vacio-72');
+    const real72 = document.getElementById('real-72');
+    const vacio96 = document.getElementById('vacio-96');
+    const real96 = document.getElementById('real-96');
+    // Datos base desde el backend
+    const capacidadAnterior = parseFloat('{{ gestion.estacion.capacidad_anterior|floatformat:"2" }}') || 0;
+    const suministros = (
+        (parseFloat('{{ gestion.suministro_w19|floatformat:"2" }}') || 0) +
+        (parseFloat('{{ gestion.suministro_w20|floatformat:"2" }}') || 0) +
+        (parseFloat('{{ gestion.suministro_w21|floatformat:"2" }}') || 0) +
+        (parseFloat('{{ gestion.suministro_w22|floatformat:"2" }}') || 0)
+    );
+    const hrsTotal = parseFloat('{{ gestion.hrs_total|floatformat:"2" }}') || 0;
+    const totalTanque = parseFloat('{{ gestion.estacion.total|floatformat:"2" }}') || 0;
+    // Actualiza todos los campos dependientes del consumo
+    function updateCamposDependientes(consumo) {
+        consumo = parseFloat(consumo) || 0;
+        // Nivel de combustible
+        const nivel = capacidadAnterior + suministros - (hrsTotal * consumo);
+        const nivelPositivo = Math.max(nivel, 0);
+        nivelCombustible.textContent = nivelPositivo.toFixed(0) + " Lts";
+        // Autonomía
+        const autonomia = consumo > 0 ? nivelPositivo / consumo : 0;
+        autonomiaHrs.textContent = Math.round(autonomia);
+        // Necesario para 100%
+        const necesario = totalTanque - nivelPositivo;
+        necesario100.textContent = necesario.toFixed(0) + " Lts";
+        // Porcentaje barra
+        const porcentaje = totalTanque > 0 ? (nivelPositivo * 100 / totalTanque) : 0;
+        porcentajeBarra.textContent = porcentaje.toFixed(1) + "%";
+        // Proyecciones vacio
+        vacio24.textContent = (consumo * 24).toFixed(0);
+        vacio36.textContent = (consumo * 36).toFixed(0);
+        vacio48.textContent = (consumo * 48).toFixed(0);
+        vacio72.textContent = (consumo * 72).toFixed(0);
+        vacio96.textContent = (consumo * 96).toFixed(0);
+        // Proyecciones real
+        real24.textContent = (autonomia > 24 ? 0 : (24 * consumo - nivelPositivo)).toFixed(0);
+        real36.textContent = (autonomia > 36 ? 0 : (36 * consumo - nivelPositivo)).toFixed(0);
+        real48.textContent = (autonomia > 48 ? 0 : (48 * consumo - nivelPositivo)).toFixed(0);
+        real72.textContent = (autonomia > 72 ? 0 : (72 * consumo - nivelPositivo)).toFixed(0);
+        real96.textContent = (autonomia > 96 ? 0 : (96 * consumo - nivelPositivo)).toFixed(0);
+    }
+    if (consumoInput) {
+        consumoInput.addEventListener('input', function() {
+            updateCamposDependientes(consumoInput.value);
+        });
+        // Inicializa al cargar
+        updateCamposDependientes(consumoInput.value);
+        consumoInput.addEventListener('change', function() {
+            const newConsumo = consumoInput.value;
+            fetch("{% url 'actualizar_consumo_estacion' gestion.estacion.id %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ consumo: newConsumo })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    consumoInput.classList.add('border-green-500');
+                    setTimeout(() => consumoInput.classList.remove('border-green-500'), 1000);
+                } else {
+                    consumoInput.classList.add('border-red-500');
+                    setTimeout(() => consumoInput.classList.remove('border-red-500'), 1000);
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

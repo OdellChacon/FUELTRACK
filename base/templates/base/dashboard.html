@@ -1,0 +1,122 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="bg-white min-h-screen p-8">
+    <div class="card-container grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <a href="{% url 'listar_estaciones' %}" style="text-decoration: none;">
+            <div class="card bg-gradient-to-tr from-yellow-400 via-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 flex flex-col items-center cursor-pointer">
+                <i class="bx bx-gas-pump text-6xl mb-4 drop-shadow-lg"></i>
+                <h3 class="text-xl font-bold tracking-wide">Estaciones</h3>
+                <p class="text-lg font-semibold mt-2">{{ estaciones_count }} registradas</p>
+            </div>
+        </a>
+        <a href="{% url 'listar_usuarios' %}" style="text-decoration: none;">
+            <div class="card bg-gradient-to-tr from-blue-400 via-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 flex flex-col items-center cursor-pointer">
+                <i class="bx bx-group text-6xl mb-4 drop-shadow-lg"></i>
+                <h3 class="text-xl font-bold tracking-wide">Usuarios</h3>
+                <p class="text-lg font-semibold mt-2">{{ usuarios_count }} registrados</p>
+            </div>
+        </a>
+        <a href="{% url 'auditoria_lista' %}" style="text-decoration: none;">
+            <div class="card bg-gradient-to-tr from-green-400 via-green-500 to-green-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 flex flex-col items-center cursor-pointer">
+                <i class="bx bx-search-alt text-6xl mb-4 drop-shadow-lg"></i>
+                <h3 class="text-xl font-bold tracking-wide">Auditorías</h3>
+                <p class="text-lg font-semibold mt-2">{{ auditorias_count }} actividades registradas</p>
+            </div>
+        </a>
+        <div class="card bg-gradient-to-tr from-red-400 via-red-500 to-red-600 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition duration-300 transform hover:scale-105 flex flex-col items-center">
+            <i class="bx bx-error text-6xl mb-4 drop-shadow-lg"></i>
+            <h3 class="text-xl font-bold tracking-wide">Reportes</h3>
+            <p class="text-lg font-semibold mt-2">10 generados</p>
+        </div>
+    </div>
+
+    <div class="charts grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div class="chart bg-white p-6 rounded-2xl shadow-xl">
+            <h2 class="text-lg font-bold mb-4 text-gray-700 flex items-center gap-2">
+                <span class="inline-block w-2 h-6 bg-yellow-400 rounded-r"></span>
+                Estaciones por Mercado
+            </h2>
+            <canvas id="stationsChart" class="w-full h-64"></canvas>
+        </div>
+        <div class="chart bg-white p-6 rounded-2xl shadow-xl">
+            <h2 class="text-lg font-bold mb-4 text-gray-700 flex items-center gap-2">
+                <span class="inline-block w-2 h-6 bg-blue-400 rounded-r"></span>
+                Auditorías por Mes
+            </h2>
+            <canvas id="auditsChart" class="w-full h-64"></canvas>
+        </div>
+    </div>
+
+    <div class="notifications bg-white p-6 rounded-2xl shadow-xl">
+        <h2 class="text-lg font-bold mb-4 text-gray-700 flex items-center gap-2">
+            <span class="inline-block w-2 h-6 bg-green-400 rounded-r"></span>
+            Notificaciones Recientes
+        </h2>
+        <ul class="space-y-3">
+            {% for registro in auditoria_reciente %}
+            <li class="flex items-center gap-2 text-gray-700">
+                {% if forloop.counter == 1 %}
+                    <span class="inline-block w-2 h-2 bg-yellow-400 rounded-full"></span>
+                {% elif forloop.counter == 2 %}
+                    <span class="inline-block w-2 h-2 bg-blue-400 rounded-full"></span>
+                {% else %}
+                    <span class="inline-block w-2 h-2 bg-green-400 rounded-full"></span>
+                {% endif %}
+                <span>
+                    [{{ registro.fecha|date:"d/m/Y H:i" }}] 
+                    {{ registro.usuario_display|default:"anónimo" }}: 
+                    {{ registro.accion }} en {{ registro.modulo }}.
+                    {% if registro.detalles %}<br><span class="text-xs text-gray-500">{{ registro.detalles }}</span>{% endif %}
+                </span>
+            </li>
+            {% empty %}
+            <li class="text-gray-400">No hay notificaciones recientes.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    // Datos para el gráfico de estaciones por mercado
+    const mercados = {{ mercados|safe }};
+    const cantidades = {{ cantidades|safe }};
+    // Renderizar gráfico con Chart.js (ejemplo)
+    if (window.Chart) {
+        const ctx = document.getElementById('stationsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: mercados,
+                datasets: [{
+                    label: 'Estaciones',
+                    data: cantidades,
+                    backgroundColor: 'rgba(251, 191, 36, 0.7)',
+                    borderColor: 'rgba(202, 138, 4, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
