@@ -29,8 +29,10 @@ def registrar_usuario(request):
     if request.method == 'POST':
         form = UsuarioForm(request.POST)
         if form.is_valid():
-            usuario_obj = form.save()
-            # Registrar auditoría: creación
+            usuario_obj = form.save(commit=False)
+            password = form.cleaned_data.get('password1')
+            usuario_obj.set_password(password)
+            usuario_obj.save()
             registrar_evento_auditoria(request, "Crear", "Usuarios", f"Usuario creado: {usuario_obj.email}")
             return redirect('listar_usuarios')
     else:
@@ -45,7 +47,9 @@ def editar_usuario(request, usuario_id):
         form = UsuarioForm(request.POST, instance=usuario)
         if form.is_valid():
             old_values = {field: getattr(usuario, field) for field in campos_auditar}
-            usuario_obj = form.save()
+            usuario_obj = form.save(commit=False)
+            # No cambiar la contraseña aquí
+            usuario_obj.save()
             new_values = {field: getattr(usuario_obj, field) for field in campos_auditar}
             cambios = []
             for field in campos_auditar:

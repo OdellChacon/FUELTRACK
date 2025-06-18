@@ -4,7 +4,8 @@ from .models import Estacion
 class EstacionForm(forms.ModelForm):
     class Meta:
         model = Estacion
-        fields = '__all__'
+        # Excluye el campo 'id' (clave primaria automática)
+        exclude = ('id',)
         widgets = {
             'fecha': forms.DateInput(attrs={'type': 'date'}),
         }

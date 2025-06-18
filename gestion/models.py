@@ -2,6 +2,7 @@ from django.db import models
 from estaciones.models import Estacion
 from datetime import datetime, timedelta
 import math
+from calendar import monthrange
 
 class RegistroSemanal(models.Model):
     gestion = models.ForeignKey('GestionEstacion', on_delete=models.CASCADE, related_name="registros_semanales")
@@ -64,12 +65,15 @@ class GestionEstacion(models.Model):
     horas_trabajo_w21 = models.FloatField(null=True, blank=True, default=0)
     suministro_w22 = models.FloatField(null=True, blank=True, default=0)
     horas_trabajo_w22 = models.FloatField(null=True, blank=True, default=0)
+    suministro_w23 = models.FloatField(null=True, blank=True, default=0)
+    horas_trabajo_w23 = models.FloatField(null=True, blank=True, default=0)
 
     # Promedio diario (calculado)
     promedio_diario_w19 = models.FloatField(null=True, blank=True, editable=False)
     promedio_diario_w20 = models.FloatField(null=True, blank=True, editable=False)
     promedio_diario_w21 = models.FloatField(null=True, blank=True, editable=False)
     promedio_diario_w22 = models.FloatField(null=True, blank=True, editable=False)
+    promedio_diario_w23 = models.FloatField(null=True, blank=True, editable=False)
 
     # Calculados
     hrs_total = models.FloatField(null=True, blank=True, editable=False)
@@ -92,6 +96,7 @@ class GestionEstacion(models.Model):
     real_96 = models.FloatField(null=True, blank=True, editable=False)
 
     observaciones = models.TextField(null=True, blank=True)
+    historico_alarmas = models.TextField(null=True, blank=True)  # <-- Agrega este campo
     fecha_registro = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -107,11 +112,17 @@ class GestionEstacion(models.Model):
             self.horas_trabajo_w19 or 0,
             self.horas_trabajo_w20 or 0,
             self.horas_trabajo_w21 or 0,
-            self.horas_trabajo_w22 or 0
+            self.horas_trabajo_w22 or 0,
+            self.horas_trabajo_w23 or 0  # NUEVO
         ])
 
     def calcular_hrs_promedio_mensual(self, hrs_total):
-        return (hrs_total or 0) / 31
+        # Usa el número real de días del mes
+        if self.mes and self.anio:
+            dias_mes = monthrange(self.anio, self.mes)[1]
+        else:
+            dias_mes = 31
+        return (hrs_total or 0) / dias_mes
 
     def calcular_nivel_combustible(self):
         capacidad_anterior = self.estacion.capacidad_anterior if self.estacion else 0
@@ -120,7 +131,8 @@ class GestionEstacion(models.Model):
             (self.suministro_w19 or 0) +
             (self.suministro_w20 or 0) +
             (self.suministro_w21 or 0) +
-            (self.suministro_w22 or 0)
+            (self.suministro_w22 or 0) +
+            (self.suministro_w23 or 0)  # NUEVO
         )
         hrs_total = self.hrs_total or 0
         print("DEBUG NIVEL DE COMBUSTIBLE:",
@@ -175,6 +187,7 @@ class GestionEstacion(models.Model):
         self.promedio_diario_w20 = self.calcular_promedio_diario(self.horas_trabajo_w20)
         self.promedio_diario_w21 = self.calcular_promedio_diario(self.horas_trabajo_w21)
         self.promedio_diario_w22 = self.calcular_promedio_diario(self.horas_trabajo_w22)
+        self.promedio_diario_w23 = self.calcular_promedio_diario(self.horas_trabajo_w23)
 
         # HRS TOTAL y PROMEDIO MENSUAL (usar variables locales)
         hrs_total = self.calcular_hrs_total()
@@ -188,7 +201,8 @@ class GestionEstacion(models.Model):
             (self.suministro_w19 or 0) +
             (self.suministro_w20 or 0) +
             (self.suministro_w21 or 0) +
-            (self.suministro_w22 or 0)
+            (self.suministro_w22 or 0) +
+            (self.suministro_w23 or 0)  # NUEVO
         )
         nivel_comb = capacidad_anterior + suma_suministros - (hrs_total * consumo)
         nivel_comb_redondeado = self.safe_int(max(nivel_comb, 0))
@@ -222,3 +236,43 @@ class GestionEstacion(models.Model):
             except Exception:
                 return 0
         return 0
+
+class EventoImportado(models.Model):
+    estacion = models.ForeignKey(Estacion, on_delete=models.CASCADE)
+    fecha_inicio = models.DateTimeField()
+    fecha_fin = models.DateTimeField()
+    descripcion = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('estacion', 'fecha_inicio', 'fecha_fin')
+        verbose_name = "Evento Importado"
+        verbose_name_plural = "Eventos Importados"
+
+    def __str__(self):
+        return f"{self.estacion} | {self.fecha_inicio} - {self.fecha_fin}"
+
+class EstacionMapping(models.Model):
+    nombre_externo = models.CharField(max_length=100)
+    id_externo = models.CharField(max_length=50, blank=True, null=True)
+    estacion = models.ForeignKey(Estacion, on_delete=models.CASCADE)
+    # Puedes agregar campos para normalización o alias si lo deseas
+
+    def __str__(self):
+        return f"{self.nombre_externo} ({self.id_externo}) -> {self.estacion.nombre}"
+
+class ComentarioGestion(models.Model):
+    gestion = models.ForeignKey(GestionEstacion, on_delete=models.CASCADE, related_name='comentarios')
+    texto = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    autor = models.CharField(max_length=100, blank=True, null=True)  # Opcional: para identificar al usuario
+
+    def __str__(self):
+        return f"Comentario en {self.gestion} - {self.fecha:%Y-%m-%d %H:%M}"
+
+class Estacion(models.Model):
+    # ...existing code...
+    # Añade estos campos al modelo Estacion
+    tanque_reserva_condenado = models.BooleanField(default=False)
+    tanque_base_condenado = models.BooleanField(default=False)
+    tanque_externo_condenado = models.BooleanField(default=False)
+    # ...existing code...

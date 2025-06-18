@@ -1,0 +1,108 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<div class="container mx-auto mt-8">
+    <h2 class="text-2xl font-bold text-center mb-8 text-blue-700 drop-shadow">Histórico de Horas de Trabajo Importadas</h2>
+    <form method="get" class="mb-8 flex justify-center gap-2">
+        <input
+            type="text"
+            name="q"
+            value="{{ filtro }}"
+            placeholder="Filtrar por nombre de estación..."
+            class="border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-full px-5 py-2 w-96 shadow transition text-center text-blue-700 font-semibold placeholder-blue-300"
+        >
+        <button
+            type="submit"
+            class="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-2 rounded-full shadow hover:from-blue-600 hover:to-blue-800 font-bold flex items-center gap-2 transition"
+        >
+            <i class="bx bx-search text-lg"></i>
+            Buscar
+        </button>
+    </form>
+    <div class="overflow-x-auto rounded-lg shadow-lg">
+        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow text-center text-sm">
+            <thead>
+                <tr class="bg-gradient-to-r from-blue-400 to-blue-600 text-white uppercase text-sm text-center">
+                    <th class="px-4 py-4 text-center">Estación (sistema)</th>
+                    <th class="px-4 py-4 text-center">Fecha Inicio</th>
+                    <th class="px-4 py-4 text-center">Fecha Fin</th>
+                    <th class="px-4 py-4 text-center">Duración (hrs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for evento in eventos %}
+                <tr
+                    class="border-t transition text-center
+                        {% if evento.duracion_horas != '' and evento.duracion_horas < 3 %}
+                            bg-green-100
+                        {% elif evento.duracion_horas >= 8 %}
+                            bg-red-100
+                        {% elif evento.duracion_horas >= 4 %}
+                            bg-yellow-100
+                        {% else %}
+                            bg-white
+                        {% endif %}"
+                >
+                    <td class="px-4 py-3 text-center font-semibold 
+                        {% if evento.duracion_horas != '' and evento.duracion_horas < 3 %}
+                            text-green-700
+                        {% elif evento.duracion_horas >= 8 %}
+                            text-red-700
+                        {% elif evento.duracion_horas >= 4 %}
+                            text-yellow-700
+                        {% else %}
+                            text-blue-800
+                        {% endif %}
+                    ">{{ evento.estacion.nombre }}</td>
+                    <td class="px-4 py-3 text-center
+                        {% if evento.duracion_horas != '' and evento.duracion_horas < 3 %}
+                            text-green-700
+                        {% elif evento.duracion_horas >= 8 %}
+                            text-red-700
+                        {% elif evento.duracion_horas >= 4 %}
+                            text-yellow-700
+                        {% endif %}
+                    ">{{ evento.fecha_inicio }}</td>
+                    <td class="px-4 py-3 text-center
+                        {% if evento.duracion_horas != '' and evento.duracion_horas < 3 %}
+                            text-green-700
+                        {% elif evento.duracion_horas >= 8 %}
+                            text-red-700
+                        {% elif evento.duracion_horas >= 4 %}
+                            text-yellow-700
+                        {% endif %}
+                    ">{{ evento.fecha_fin }}</td>
+                    <td class="px-4 py-3 text-center font-bold
+                        {% if evento.duracion_horas != '' and evento.duracion_horas < 3 %}
+                            text-green-700
+                        {% elif evento.duracion_horas >= 8 %}
+                            text-red-700
+                        {% elif evento.duracion_horas >= 4 %}
+                            text-yellow-700
+                        {% endif %}
+                    ">{{ evento.duracion_horas }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-6 text-center text-gray-400">No hay registros.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-6 flex justify-center">
+        {% if eventos.has_other_pages %}
+            <div class="inline-flex gap-1">
+                {% if eventos.has_previous %}
+                    <a href="?q={{ filtro }}&page={{ eventos.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-blue-200 font-bold">&laquo;</a>
+                {% endif %}
+                <span class="px-3 py-1 bg-blue-100 rounded font-semibold text-blue-700">{{ eventos.number }} / {{ eventos.paginator.num_pages }}</span>
+                {% if eventos.has_next %}
+                    <a href="?q={{ filtro }}&page={{ eventos.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-blue-200 font-bold">&raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

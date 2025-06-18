@@ -19,9 +19,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <!-- Opciones -->
                 <li class="sidebar-section">Opciones</li>
-                <li><a href="/profile"><i class="bx bx-user"></i> Perfil</a></li>
+                <li>
+                    <a href="/gestion/historico_alertas/" id="alert-history-link">
+                        <i class="bx bx-bell"></i> Histórico de alertas
+                    </a>
+                </li>
+                
                 <li><a href="/logout"><i class="bx bx-log-out"></i> Cerrar sesión</a></li>
+                <li class="text-center mt-8 mb-2 text-gray-400 text-xs font-semibold tracking-wide" style="pointer-events:none;">
+                    Grupo Zenith - 2025
+                </li>
             </ul>
+            
         `;
 
         // Mejora de la animación de entrada
@@ -32,5 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sidebar.style.opacity = "1";
             sidebar.style.transform = "translateX(0) scale(1)";
         }, 100);
+
+        // No agregues ningún eventListener ni preventDefault para este enlace
     }
 });

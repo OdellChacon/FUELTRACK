@@ -19,10 +19,16 @@
                     <i class="bx bx-import"></i>
                     <span>Importar</span>
                 </button>
+                
                 <!-- Botón Exportar -->
                 <button id="exportButton" class="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-600" onclick="openModalGestiones('export')">
                     <i class="bx bx-export"></i>
                     <span>Exportar</span>
+                </button>
+                <!-- Botón Importar Horas Masivo -->
+                <button class="bg-purple-600 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700" onclick="openModalImportarHorasMasivo()">
+                    <i class="bx bx-time"></i>
+                    <span>Horas</span>
                 </button>
             </div>
             <div class="flex gap-2 items-center">
@@ -59,7 +65,7 @@
                     <th class="px-2 py-3 text-center">
                         <input type="checkbox" id="selectAll" class="form-checkbox h-5 w-5 text-blue-600">
                     </th>
-                    <th class="px-2 py-3 text-center">ID</th>
+                    <th class="px-2 py-3 text-center">ID Estación</th>
                     <th class="px-2 py-3 text-center">MERCADO</th>
                     <th class="px-2 py-3 text-center">NOMBRE</th>
                     <th class="px-2 py-3 text-center">CONSUMO</th>
@@ -74,11 +80,11 @@
             </thead>
             <tbody>
                 {% for gestion in gestiones %}
-                <tr class="border-t hover:bg-gray-50" data-id="{{ gestion.id }}">
+                <tr class="border-t hover:bg-gray-50" data-id="{{ gestion.id }}" data-estacion-id="{{ gestion.estacion.estacion_id }}">
                     <td class="px-2 py-2 text-center">
                         <input type="checkbox" class="selectRow form-checkbox h-5 w-5 text-blue-600" data-id="{{ gestion.id }}">
                     </td>
-                    <td class="px-2 py-2 text-center font-semibold">{{ gestion.estacion.id }}</td>
+                    <td class="px-2 py-2 text-center font-semibold">{{ gestion.estacion.estacion_id }}</td>
                     <td class="px-2 py-2 text-center">{{ gestion.estacion.mercado }}</td>
                     <td class="px-2 py-2 text-center">{{ gestion.estacion.nombre }}</td>
                     <td class="px-2 py-2 text-center">{{ gestion.estacion.consumo|floatformat:1 }}</td>
@@ -153,6 +159,24 @@
         </div>
         <div class="mt-4 text-center">
             <button class="btn-cancel bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg" onclick="closeModalGestiones()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para importar horas masivo -->
+<div id="modalImportarHorasMasivo" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden z-50" onclick="closeModalImportarHorasMasivo()">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-[500px] max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+        <h3 class="text-xl font-semibold mb-4 text-center">Importar Horas de Trabajo (Todas las Estaciones)</h3>
+        <input type="file" id="fileHorasMasivoInput" accept=".xls,.xlsx" class="mb-4 w-full" />
+        <div class="flex justify-center gap-4">
+            <button class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg" onclick="importarHorasMasivo()">Procesar</button>
+            <button class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg" onclick="closeModalImportarHorasMasivo()">Cancelar</button>
+        </div>
+        <!-- Contenedor scrolleable para la previsualización -->
+        <div id="importHorasMasivoResumen" class="mt-4 text-xs text-gray-700 overflow-y-auto" style="max-height: 300px;"></div>
+        <!-- Botón de confirmación siempre visible debajo -->
+        <div id="confirmImportHorasMasivoDiv" class="mt-2 text-center hidden">
+            <button class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg" onclick="confirmarImportarHorasMasivo()">Confirmar importación</button>
         </div>
     </div>
 </div>
@@ -339,6 +363,7 @@
                     row.style.display = '';
                     return;
                 }
+                // Buscar por ID de estación (columna 1) y nombre (columna 3)
                 const idCell = row.children[1];
                 const nombreCell = row.children[3];
                 const idText = idCell ? idCell.textContent.trim().toLowerCase() : '';
@@ -445,5 +470,99 @@
             }
         });
     }
+
+    // Modal Importar Horas Masivo
+    window.openModalImportarHorasMasivo = () => {
+        document.getElementById('modalImportarHorasMasivo').classList.remove('hidden');
+        document.getElementById('importHorasMasivoResumen').innerHTML = '';
+        document.getElementById('fileHorasMasivoInput').value = '';
+    };
+    window.closeModalImportarHorasMasivo = () => {
+        document.getElementById('modalImportarHorasMasivo').classList.add('hidden');
+    };
+    window.importarHorasMasivo = () => {
+        const fileInput = document.getElementById('fileHorasMasivoInput');
+        const resumenDiv = document.getElementById('importHorasMasivoResumen');
+        if (!fileInput.files.length) {
+            resumenDiv.innerHTML = '<span class="text-red-500">Seleccione un archivo.</span>';
+            return;
+        }
+        const form = new FormData();
+        form.append('file', fileInput.files[0]);
+        form.append('mes', document.getElementById('mesSelect').value);
+        form.append('anio', document.getElementById('anioSelect').value);
+        fetch('{% url "importar_horas_masivo" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: form
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                if (data.preview_html) {
+                    resumenDiv.innerHTML = data.preview_html;
+                    // Mostrar botón de confirmación solo si hay filas importables
+                    document.getElementById('confirmImportHorasMasivoDiv').classList.remove('hidden');
+                    // Guardar los datos de la previsualización para confirmar
+                    window._importHorasMasivoPreview = data;
+                } else if (data.resumen && data.resumen.length) {
+                    let resumenHtml = '<ul style="text-align:left;">';
+                    data.resumen.forEach(linea => {
+                        resumenHtml += '<li>' + linea + '</li>';
+                    });
+                    resumenHtml += '</ul>';
+                    resumenDiv.innerHTML = resumenHtml;
+                    document.getElementById('confirmImportHorasMasivoDiv').classList.add('hidden');
+                } else {
+                    resumenDiv.innerHTML = '<span class="text-green-600">Archivo procesado correctamente.</span>';
+                    document.getElementById('confirmImportHorasMasivoDiv').classList.add('hidden');
+                }
+            } else {
+                resumenDiv.innerHTML = '<span class="text-red-500">Error: ' + data.message + '</span>';
+                document.getElementById('confirmImportHorasMasivoDiv').classList.add('hidden');
+            }
+        })
+        .catch(error => {
+            resumenDiv.innerHTML = '<span class="text-red-500">Error de red o servidor.</span>';
+            document.getElementById('confirmImportHorasMasivoDiv').classList.add('hidden');
+        });
+    };
+
+    window.confirmarImportarHorasMasivo = () => {
+        // Extraer filas importables de la previsualización
+        const data = window._importHorasMasivoPreview;
+        if (!data || !data.preview_html) return;
+        // Necesitamos reconstruir las filas importables (las que tienen gestion_id y puede_importar)
+        // Lo ideal es que el backend devuelva también un array de filas importables, pero si no, puedes modificar el backend para hacerlo.
+        // Aquí asumimos que el backend lo devuelve como data.filas_importables
+        const filas = data.filas_importables || [];
+        if (!filas.length) {
+            alert('No hay filas importables.');
+            return;
+        }
+        fetch('{% url "confirmar_importar_horas_masivo" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filas: filas,
+                mes: document.getElementById('mesSelect').value,
+                anio: document.getElementById('anioSelect').value
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('importHorasMasivoResumen').innerHTML = '<span class="text-green-600">' + data.message + '</span>';
+                document.getElementById('confirmImportHorasMasivoDiv').classList.add('hidden');
+            } else {
+                document.getElementById('importHorasMasivoResumen').innerHTML = '<span class="text-red-500">Error: ' + data.message + '</span>';
+            }
+        });
+    };
 </script>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load static %}
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <div class="container mx-auto mt-8">
@@ -29,7 +30,7 @@
         <div class="bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg p-6 flex flex-col items-center">
             <div class="text-white text-lg font-semibold mb-2">Disponible</div>
             <div class="flex flex-col items-center">
-                <span class="text-3xl font-bold text-white">{{ gestion.disponible|floatformat:0 }} Lts</span>
+                <span class="text-3xl font-bold text-white" id="disponible-tarjeta">{{ gestion.disponible|floatformat:0 }} Lts</span>
                 <span class="text-white text-sm mt-1">En el Tanque de Reserva</span>
             </div>
         </div>
@@ -61,7 +62,13 @@
         </div>
         <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border-l-4 border-yellow-500">
             <div class="text-xs text-gray-400 uppercase mb-1">Capacidad Anterior</div>
-            <div class="text-xl font-bold text-yellow-700" id="capacidad-anterior">{{ gestion.estacion.capacidad_anterior|floatformat:0 }} Lts</div>
+            <div class="text-xl font-bold text-yellow-700" id="capacidad-anterior">
+                <input id="capacidad-anterior-input" type="number" step="0.01" min="0"
+                       value="{{ gestion.estacion.capacidad_anterior|floatformat:0 }}"
+                       class="w-24 text-center rounded-lg border border-gray-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 transition font-bold text-yellow-700 outline-none"
+                       style="box-shadow: none;" />
+                <span>Lts</span>
+            </div>
         </div>
         <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border-l-4 border-red-500">
             <div class="text-xs text-gray-400 uppercase mb-1">Necesario para 100%</div>
@@ -78,8 +85,8 @@
                         <i class="bx bx-hash text-lg"></i>
                     </span>
                     <div>
-                        <div class="text-xs text-gray-400 uppercase">ID</div>
-                        <div class="font-semibold text-gray-800">{{ gestion.estacion.id }}</div>
+                        <div class="text-xs text-gray-400 uppercase">ID Estación</div>
+                        <div class="font-semibold text-gray-800">{{ gestion.estacion.estacion_id }}</div>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -111,31 +118,67 @@
                 </div>
             </div>
             <div class="space-y-4">
+                <!-- Tanque de Reserva (editable y condenable) -->
                 <div class="flex items-center gap-3">
-                    <span class="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
+                    <span id="icono-tanque-reserva" role="button" tabindex="0"
+                        class="inline-block bg-purple-100 text-purple-600 rounded-full p-2 cursor-pointer transition-colors">
+                        <i class="bx bx-gas-pump text-lg"></i>
+                    </span>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">Tanque de Reserva</div>
+                        <div class="font-semibold text-gray-800">
+                            <input id="disponible-input" type="number" step="0.01" min="0"
+                                value="{{ gestion.disponible|floatformat:0 }}"
+                                class="w-24 text-center rounded-lg border border-gray-300 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition font-bold text-purple-700 outline-none"
+                                style="box-shadow: none;" />
+                            <span>Lts</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tanque Base (editable y condenable) -->
+                <div class="flex items-center gap-3">
+                    <span id="icono-tanque-base" role="button" tabindex="0"
+                        class="inline-block bg-blue-100 text-blue-600 rounded-full p-2 cursor-pointer transition-colors">
                         <i class="bx bx-gas-pump text-lg"></i>
                     </span>
                     <div>
                         <div class="text-xs text-gray-400 uppercase">Tanque Base</div>
-                        <div class="font-semibold text-gray-800">{{ gestion.estacion.tanque_base }}</div>
+                        <div class="font-semibold text-gray-800">
+                            <input id="tanque-base-input" type="number" step="0.01" min="0"
+                                value="{{ gestion.estacion.tanque_base|floatformat:0 }}"
+                                class="w-24 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none"
+                                style="box-shadow: none;" />
+                            <span>Lts</span>
+                        </div>
                     </div>
                 </div>
+                <!-- Tanque Externo (editable y condenable) -->
                 <div class="flex items-center gap-3">
-                    <span class="inline-block bg-green-100 text-green-600 rounded-full p-2">
+                    <span id="icono-tanque-externo" role="button" tabindex="0"
+                        class="inline-block bg-green-100 text-green-600 rounded-full p-2 cursor-pointer transition-colors">
                         <i class="bx bx-gas-pump text-lg"></i>
                     </span>
                     <div>
                         <div class="text-xs text-gray-400 uppercase">Tanque Externo</div>
-                        <div class="font-semibold text-gray-800">{{ gestion.estacion.tanque_externo }}</div>
+                        <div class="font-semibold text-gray-800">
+                            <input id="tanque-externo-input" type="number" step="0.01" min="0"
+                                value="{{ gestion.estacion.tanque_externo|floatformat:0 }}"
+                                class="w-24 text-center rounded-lg border border-gray-300 focus:border-green-400 focus:ring-2 focus:ring-green-200 transition font-bold text-green-700 outline-none"
+                                style="box-shadow: none;" />
+                            <span>Lts</span>
+                        </div>
                     </div>
                 </div>
+                <!-- Total (solo lectura) -->
                 <div class="flex items-center gap-3">
                     <span class="inline-block bg-yellow-100 text-yellow-600 rounded-full p-2">
                         <i class="bx bx-bar-chart-alt text-lg"></i>
                     </span>
                     <div>
                         <div class="text-xs text-gray-400 uppercase">Total</div>
-                        <div class="font-semibold text-gray-800">{{ gestion.estacion.total }}</div>
+                        <div class="font-semibold text-gray-800" id="total-tanque">
+                            {{ gestion.estacion.total }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -164,33 +207,83 @@
                         <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
                             <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 1</span>
                         </td>
-                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w19|floatformat:0 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w19|floatformat:2 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w19|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="suministro-w19" type="number" step="0.01" min="0"
+                                value="{{ gestion.suministro_w19|floatformat:0 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="horas-w19" type="number" step="0.01" min="0"
+                                value="{{ gestion.horas_trabajo_w19|floatformat:2 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center" id="promedio-w19">{{ gestion.promedio_diario_w19|floatformat:2 }}</td>
                     </tr>
                     <tr class="hover:bg-blue-50 transition">
                         <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
                             <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 2</span>
                         </td>
-                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w20|floatformat:0 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w20|floatformat:2 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w20|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="suministro-w20" type="number" step="0.01" min="0"
+                                value="{{ gestion.suministro_w20|floatformat:0 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="horas-w20" type="number" step="0.01" min="0"
+                                value="{{ gestion.horas_trabajo_w20|floatformat:2 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center" id="promedio-w20">{{ gestion.promedio_diario_w20|floatformat:2 }}</td>
                     </tr>
                     <tr class="hover:bg-blue-50 transition">
                         <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
                             <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 3</span>
                         </td>
-                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w21|floatformat:0 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w21|floatformat:2 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w21|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="suministro-w21" type="number" step="0.01" min="0"
+                                value="{{ gestion.suministro_w21|floatformat:0 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="horas-w21" type="number" step="0.01" min="0"
+                                value="{{ gestion.horas_trabajo_w21|floatformat:2 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center" id="promedio-w21">{{ gestion.promedio_diario_w21|floatformat:2 }}</td>
                     </tr>
                     <tr class="hover:bg-blue-50 transition">
                         <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
                             <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 4</span>
                         </td>
-                        <td class="py-2 px-4 text-center">{{ gestion.suministro_w22|floatformat:0 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.horas_trabajo_w22|floatformat:2 }}</td>
-                        <td class="py-2 px-4 text-center">{{ gestion.promedio_diario_w22|floatformat:2 }}</td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="suministro-w22" type="number" step="0.01" min="0"
+                                value="{{ gestion.suministro_w22|floatformat:0 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="horas-w22" type="number" step="0.01" min="0"
+                                value="{{ gestion.horas_trabajo_w22|floatformat:2 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center" id="promedio-w22">{{ gestion.promedio_diario_w22|floatformat:2 }}</td>
+                    </tr>
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="py-2 px-4 font-bold flex items-center gap-2 justify-center">
+                            <span class="inline-block bg-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs font-semibold">Semana 5</span>
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="suministro-w23" type="number" step="0.01" min="0"
+                                value="{{ gestion.suministro_w23|default_if_none:0|floatformat:0 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <input id="horas-w23" type="number" step="0.01" min="0"
+                                value="{{ gestion.horas_trabajo_w23|default_if_none:0|floatformat:2 }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 transition font-bold text-blue-700 outline-none" />
+                        </td>
+                        <td class="py-2 px-4 text-center" id="promedio-w23">
+        {{ gestion.promedio_diario_w23|default_if_none:"0.00"|floatformat:2 }}
+    </td>
                     </tr>
                 </tbody>
             </table>
@@ -229,12 +322,39 @@
                 </span>
                 <div>
                     <div class="text-xs text-gray-400 uppercase mb-1">Observaciones</div>
-                    <div class="font-semibold text-gray-800 mb-1">{{ gestion.observaciones }}</div>
+                    <!-- Botón para abrir ventana de comentarios -->
+                    <button id="abrirComentariosBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1">
+                        <i class="bx bx-message-square-add"></i> Ver Comentarios
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-
+    <!-- Ventana Modal de Comentarios Mejorada -->
+    <div id="modalComentarios" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 hidden" aria-modal="true" role="dialog">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-0 relative flex flex-col" onclick="event.stopPropagation()">
+            <!-- Cabecera -->
+            <div class="flex items-center justify-between px-6 py-4 border-b">
+                <h3 class="text-lg font-bold text-blue-700 flex items-center gap-2">
+                    <i class="bx bx-comment-detail"></i> Comentarios de la Gestión
+                </h3>
+            </div>
+            <!-- Lista de comentarios -->
+            <div id="comentariosLista" class="space-y-4 max-h-72 overflow-y-auto px-6 py-4 bg-gray-50 flex-1 transition-all">
+                <div class="text-gray-400 text-center">Cargando comentarios...</div>
+            </div>
+            <!-- Formulario nuevo comentario -->
+            <form id="formNuevoComentario" class="flex flex-col gap-2 px-6 py-4 border-t bg-white">
+                <textarea id="nuevoComentarioTexto" class="border rounded-lg p-2 w-full min-h-[60px] focus:ring-2 focus:ring-blue-200 transition" placeholder="Escribe un comentario..." maxlength="500"></textarea>
+                <div class="flex gap-2 items-center">
+                    <input id="nuevoComentarioAutor" type="text" class="border rounded px-2 py-1 flex-1" placeholder="Autor (opcional)" maxlength="40">
+                    <button type="submit" id="btnComentarioTxt" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+                        <i class="bx bx-send"></i> Añadir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- Proyecciones -->
     <div class="bg-white rounded-xl shadow p-6 mb-8">
         <h3 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
@@ -314,24 +434,6 @@
             </div>
         </div>
     </div>
-    
-    
-    <!-- Histórico de Alarmas -->
-    <div class="bg-white-50 rounded-xl shadow p-6 mb-8">
-        <h3 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
-            <i class="bx bx-alarm-exclamation text-2xl"></i>
-            Histórico de Alarmas
-        </h3>
-        <div class="text-gray-400">
-            <!-- Aquí puedes mostrar el contenido del histórico de alarmas -->
-            {% if gestion.historico_alarmas %}
-                {{ gestion.historico_alarmas }}
-            {% else %}
-                No hay alarmas registradas.
-            {% endif %}
-        </div>
-    </div>
-
     <div class="mt-8 flex justify-end">
         <a href="{% url 'lista_estaciones' %}" class="inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-2 rounded-lg shadow hover:bg-gray-700 transition font-semibold">
             <i class="bx bx-arrow-back text-lg"></i>
@@ -339,91 +441,198 @@
         </a>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+window.gestionVars = {
+    capacidadAnterior: "{{ gestion.estacion.capacidad_anterior|floatformat:'2' }}",
+    suministro_w19: "{{ gestion.suministro_w19|floatformat:'2' }}",
+    suministro_w20: "{{ gestion.suministro_w20|floatformat:'2' }}",
+    suministro_w21: "{{ gestion.suministro_w21|floatformat:'2' }}",
+    suministro_w22: "{{ gestion.suministro_w22|floatformat:'2' }}",
+    hrsTotal: "{{ gestion.hrs_total|floatformat:'2' }}",
+    totalTanque: "{{ gestion.estacion.total|floatformat:'2' }}",
+    gestionId: "{{ gestion.id }}",
+    csrfToken: "{{ csrf_token }}",
+    urlActualizarConsumo: "{% url 'actualizar_consumo_estacion' gestion.estacion.id %}",
+    urlActualizarCapacidad: "{% url 'actualizar_capacidad_anterior' gestion.estacion.id %}",
+    urlImportarHorasDetalle: "{% url 'importar_horas_trabajo_detalle' %}",
+    urlImportarHorasPegar: "{% url 'importar_horas_trabajo_pegar' %}",
+    urlActualizarSemana: "{% url 'actualizar_semana_gestion' gestion.id %}",
+    urlActualizarDisponible: "{% url 'actualizar_disponible_gestion' gestion.id %}",
+    urlActualizarTanqueBase: "{% url 'actualizar_tanque_base' gestion.estacion.id %}",
+    urlActualizarTanqueExterno: "{% url 'actualizar_tanque_externo' gestion.estacion.id %}",
+    urlToggleTanqueReserva: "{% url 'toggle_tanque_reserva' gestion.estacion.id %}",
+    urlToggleTanqueBase: "{% url 'toggle_tanque_base' gestion.estacion.id %}",
+    urlToggleTanqueExterno: "{% url 'toggle_tanque_externo' gestion.estacion.id %}",
+    tanqueReservaCondenado: {{ gestion.estacion.tanque_reserva_condenado|yesno:"true,false" }},
+    tanqueBaseCondenado: {{ gestion.estacion.tanque_base_condenado|yesno:"true,false" }},
+    tanqueExternoCondenado: {{ gestion.estacion.tanque_externo_condenado|yesno:"true,false" }},
+};
+
 document.addEventListener('DOMContentLoaded', function() {
-    const consumoInput = document.getElementById('consumo-input');
-    // IDs de los campos dependientes
-    const nivelCombustible = document.getElementById('nivel-combustible');
-    const autonomiaHrs = document.getElementById('autonomia-hrs');
-    const necesario100 = document.getElementById('necesario-100');
-    const porcentajeBarra = document.getElementById('porcentaje-barra');
-    const vacio24 = document.getElementById('vacio-24');
-    const real24 = document.getElementById('real-24');
-    const vacio36 = document.getElementById('vacio-36');
-    const real36 = document.getElementById('real-36');
-    const vacio48 = document.getElementById('vacio-48');
-    const real48 = document.getElementById('real-48');
-    const vacio72 = document.getElementById('vacio-72');
-    const real72 = document.getElementById('real-72');
-    const vacio96 = document.getElementById('vacio-96');
-    const real96 = document.getElementById('real-96');
-    // Datos base desde el backend
-    const capacidadAnterior = parseFloat('{{ gestion.estacion.capacidad_anterior|floatformat:"2" }}') || 0;
-    const suministros = (
-        (parseFloat('{{ gestion.suministro_w19|floatformat:"2" }}') || 0) +
-        (parseFloat('{{ gestion.suministro_w20|floatformat:"2" }}') || 0) +
-        (parseFloat('{{ gestion.suministro_w21|floatformat:"2" }}') || 0) +
-        (parseFloat('{{ gestion.suministro_w22|floatformat:"2" }}') || 0)
-    );
-    const hrsTotal = parseFloat('{{ gestion.hrs_total|floatformat:"2" }}') || 0;
-    const totalTanque = parseFloat('{{ gestion.estacion.total|floatformat:"2" }}') || 0;
-    // Actualiza todos los campos dependientes del consumo
-    function updateCamposDependientes(consumo) {
-        consumo = parseFloat(consumo) || 0;
-        // Nivel de combustible
-        const nivel = capacidadAnterior + suministros - (hrsTotal * consumo);
-        const nivelPositivo = Math.max(nivel, 0);
-        nivelCombustible.textContent = nivelPositivo.toFixed(0) + " Lts";
-        // Autonomía
-        const autonomia = consumo > 0 ? nivelPositivo / consumo : 0;
-        autonomiaHrs.textContent = Math.round(autonomia);
-        // Necesario para 100%
-        const necesario = totalTanque - nivelPositivo;
-        necesario100.textContent = necesario.toFixed(0) + " Lts";
-        // Porcentaje barra
-        const porcentaje = totalTanque > 0 ? (nivelPositivo * 100 / totalTanque) : 0;
-        porcentajeBarra.textContent = porcentaje.toFixed(1) + "%";
-        // Proyecciones vacio
-        vacio24.textContent = (consumo * 24).toFixed(0);
-        vacio36.textContent = (consumo * 36).toFixed(0);
-        vacio48.textContent = (consumo * 48).toFixed(0);
-        vacio72.textContent = (consumo * 72).toFixed(0);
-        vacio96.textContent = (consumo * 96).toFixed(0);
-        // Proyecciones real
-        real24.textContent = (autonomia > 24 ? 0 : (24 * consumo - nivelPositivo)).toFixed(0);
-        real36.textContent = (autonomia > 36 ? 0 : (36 * consumo - nivelPositivo)).toFixed(0);
-        real48.textContent = (autonomia > 48 ? 0 : (48 * consumo - nivelPositivo)).toFixed(0);
-        real72.textContent = (autonomia > 72 ? 0 : (72 * consumo - nivelPositivo)).toFixed(0);
-        real96.textContent = (autonomia > 96 ? 0 : (96 * consumo - nivelPositivo)).toFixed(0);
+    // --- Comentarios gestión ---
+    // Botón y modal
+    const abrirBtn = document.getElementById('abrirComentariosBtn');
+    const modal = document.getElementById('modalComentarios');
+    const comentariosLista = document.getElementById('comentariosLista');
+    const formNuevo = document.getElementById('formNuevoComentario');
+    const textareaNuevo = document.getElementById('nuevoComentarioTexto');
+    const inputAutor = document.getElementById('nuevoComentarioAutor');
+    const btnComentarioTxt = document.getElementById('btnComentarioTxt');
+    let editandoId = null;
+
+    // Funciones de ayuda
+    function scrollToBottom() {
+        comentariosLista.scrollTop = comentariosLista.scrollHeight;
     }
-    if (consumoInput) {
-        consumoInput.addEventListener('input', function() {
-            updateCamposDependientes(consumoInput.value);
+
+    function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, function(m) {
+            return ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[m];
         });
-        // Inicializa al cargar
-        updateCamposDependientes(consumoInput.value);
-        consumoInput.addEventListener('change', function() {
-            const newConsumo = consumoInput.value;
-            fetch("{% url 'actualizar_consumo_estacion' gestion.estacion.id %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({ consumo: newConsumo })
-            })
-            .then(response => response.json())
+    }
+    function escapeJs(text) {
+        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+    }
+
+    // Renderizar comentario
+    function renderComentario(c) {
+        return `
+        <div class="bg-white rounded-lg p-3 shadow flex flex-col gap-1 relative group border border-gray-100 hover:border-blue-200 transition">
+            <div class="text-gray-800 break-words" id="comentario-texto-${c.id}">${escapeHtml(c.texto)}</div>
+            <div class="text-xs text-gray-500 flex gap-2 items-center">
+                <span>${c.fecha}</span>
+                ${c.autor ? `<span class="font-semibold text-blue-600">- ${escapeHtml(c.autor)}</span>` : ""}
+            </div>
+            <div class="absolute top-2 right-2 flex gap-1">
+                <button class="text-yellow-600 hover:text-yellow-800" title="Editar" onclick="editarComentario(${c.id}, '${escapeJs(c.texto)}', '${escapeJs(c.autor)}')"><i class="bx bx-edit"></i></button>
+                <button class="text-red-600 hover:text-red-800" title="Eliminar" onclick="eliminarComentario(${c.id})"><i class="bx bx-trash"></i></button>
+            </div>
+        </div>
+        `;
+    }
+
+    // Cargar comentarios
+    function cargarComentarios() {
+        comentariosLista.innerHTML = '<div class="text-gray-400 text-center">Cargando comentarios...</div>';
+        fetch(`/gestion/comentarios/{{ gestion.id }}/`)
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    consumoInput.classList.add('border-green-500');
-                    setTimeout(() => consumoInput.classList.remove('border-green-500'), 1000);
+                if (data.success && data.comentarios.length) {
+                    comentariosLista.innerHTML = '';
+                    data.comentarios.forEach(c => {
+                        comentariosLista.innerHTML += renderComentario(c);
+                    });
+                    scrollToBottom();
                 } else {
-                    consumoInput.classList.add('border-red-500');
-                    setTimeout(() => consumoInput.classList.remove('border-red-500'), 1000);
+                    comentariosLista.innerHTML = '<div class="text-gray-400 text-center">Sin comentarios.</div>';
                 }
             });
+    }
+
+    // Editar comentario
+    window.editarComentario = function(id, texto, autor) {
+        editandoId = id;
+        textareaNuevo.value = texto;
+        inputAutor.value = autor;
+        textareaNuevo.focus();
+        btnComentarioTxt.textContent = "Guardar";
+        document.querySelectorAll('[id^="comentario-texto-"]').forEach(el => el.classList.remove('bg-yellow-100'));
+        const el = document.getElementById('comentario-texto-' + id);
+        if (el) el.classList.add('bg-yellow-100');
+    };
+
+    // Eliminar comentario
+    window.eliminarComentario = function(id) {
+        Swal.fire({
+            title: '¿Eliminar comentario?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33'
+        }).then(result => {
+            if (result.isConfirmed) {
+                fetch(`/gestion/comentarios/{{ gestion.id }}/`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ id })
+                })
+                .then(r => r.json())
+                .then (data => {
+                    if (data.success) {
+                        cargarComentarios();
+                        Swal.fire('Eliminado', '', 'success');
+                    } else {
+                        Swal.fire('Error', data.message || 'No se pudo eliminar.', 'error');
+                    }
+                });
+            }
+        });
+    };
+
+    // Formulario nuevo comentario
+    formNuevo.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const texto = textareaNuevo.value.trim();
+        const autor = inputAutor.value.trim();
+        if (!texto) {
+            Swal.fire('Error', 'El comentario no puede estar vacío.', 'error');
+            return;
+        }
+        let method = editandoId ? 'PUT' : 'POST';
+        let body = editandoId
+            ? JSON.stringify({ id: editandoId, texto })
+            : JSON.stringify({ texto, autor });
+        fetch(`/gestion/comentarios/{{ gestion.id }}/`, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                textareaNuevo.value = '';
+                inputAutor.value = '';
+                editandoId = null;
+                btnComentarioTxt.textContent = "Añadir";
+                cargarComentarios();
+                setTimeout(scrollToBottom, 100);
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo guardar.', 'error');
+            }
+        });
+    });
+
+    // Abrir modal
+    if (abrirBtn) {
+        abrirBtn.addEventListener('click', function() {
+            modal.classList.remove('hidden');
+            cargarComentarios();
+            textareaNuevo.value = '';
+            inputAutor.value = '';
+            editandoId = null;
+            btnComentarioTxt.textContent = "Añadir";
+            setTimeout(() => textareaNuevo.focus(), 200);
         });
     }
+    // Cerrar modal
+    window.cerrarModalComentarios = function() {
+        modal.classList.add('hidden');
+        textareaNuevo.value = '';
+        inputAutor.value = '';
+        editandoId = null;
+        btnComentarioTxt.textContent = "Añadir";
+        document.querySelectorAll('[id^="comentario-texto-"]').forEach(el => el.classList.remove('bg-yellow-100'));
+    };
+    modal.addEventListener('click', function() {
+        cerrarModalComentarios();
+    });
 });
 </script>
+<script src="{% static 'js/gestion.js' %}"></script>
 {% endblock %}

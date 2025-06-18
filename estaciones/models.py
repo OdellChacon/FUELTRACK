@@ -1,7 +1,7 @@
 from django.db import models
 
 class Estacion(models.Model):
-    id = models.IntegerField(primary_key=True) 
+    estacion_id = models.IntegerField()  # Identificador de la estación
     region = models.CharField(max_length=100)
     mercado = models.CharField(max_length=100)
     nombre = models.CharField(max_length=255)
@@ -10,6 +10,7 @@ class Estacion(models.Model):
     estado = models.CharField(max_length=100)
     marca = models.CharField(max_length=100)
     modelo = models.CharField(max_length=100)
+    serial = models.CharField(max_length=100, blank=True, null=True)  # <--- AGREGADO
     capacidad = models.FloatField()
     consumo = models.FloatField()
     pac = models.CharField(max_length=100)  
@@ -25,9 +26,16 @@ class Estacion(models.Model):
     fecha = models.DateField()  
     mes = models.PositiveSmallIntegerField("Mes", null=True, blank=True)  # 1=Enero, 12=Diciembre
     anio = models.PositiveSmallIntegerField("Año", null=True, blank=True)
+    
+    # NUEVO: Estado de condena/bloqueo de tanques
+    tanque_reserva_condenado = models.BooleanField(default=False)
+    tanque_base_condenado = models.BooleanField(default=False)
+    tanque_externo_condenado = models.BooleanField(default=False)
+
     class Meta:
         verbose_name = "Estación"
         verbose_name_plural = "Estaciones"
+        unique_together = ('estacion_id', 'mes', 'anio')  # Un registro por estación/mes/año
 
     def sincronizar_gestion(self):
         """

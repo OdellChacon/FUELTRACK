@@ -69,7 +69,7 @@
                     <th class="px-4 py-2 text-sm font-medium text-gray-600 text-center">
                         <input type="checkbox" id="selectAll" class="form-checkbox h-5 w-5 text-blue-600">
                     </th>
-                    <th class="px-4 py-2 text-sm font-medium text-gray-600 text-center">ID</th>
+                    <th class="px-4 py-2 text-sm font-medium text-gray-600 text-center">ID Estación</th>
                     <th class="px-4 py-2 text-sm font-medium text-gray-600 text-center">Nombre</th>
                     <th class="px-4 py-2 text-sm font-medium text-gray-600 text-center">Región</th>
                     <th class="px-4 py-2 text-sm font-medium text-gray-600 text-center">Capacidad</th>
@@ -83,14 +83,14 @@
                     <td class="px-4 py-2 text-sm text-gray-700 text-center">
                         <input type="checkbox" class="selectRow form-checkbox h-5 w-5 text-blue-600" data-id="{{ estacion.id }}">
                     </td>
-                    <td class="px-4 py-2 text-sm text-gray-700 text-center">{{ estacion.id }}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700 text-center">{{ estacion.estacion_id }}</td>
                     <td class="px-4 py-2 text-sm text-gray-700 text-center">{{ estacion.nombre }}</td>
                     <td class="px-4 py-2 text-sm text-gray-700 text-center">{{ estacion.region }}</td>
                     <td class="px-4 py-2 text-sm text-gray-700 text-center">{{ estacion.capacidad }}</td>
                     <td class="px-4 py-2 text-sm text-gray-700 text-center">{{ estacion.estado }}</td>
                     <td class="px-4 py-2 text-center">
                         <div class="flex justify-center gap-2">
-                            <a href="{% url 'editar_estacion' estacion.id %}" class="bg-yellow-500 text-white text-sm px-3 py-2 rounded-lg flex items-center justify-center w-24 hover:bg-yellow-600">
+                            <a href="{% url 'editar_estacion' estacion.estacion_id %}?mes={{ estacion.mes }}&anio={{ estacion.anio }}" class="bg-yellow-500 text-white text-sm px-3 py-2 rounded-lg flex items-center justify-center w-24 hover:bg-yellow-600">
                                 <i class="bx bx-edit"></i>
                                 <span>Editar</span>
                             </a>
@@ -235,6 +235,12 @@
             const form = new FormData();
             form.append('csrfmiddlewaretoken', '{{ csrf_token }}');
             form.append('file', file);
+
+            // Agrega mes y año seleccionados al FormData
+            const mes = document.getElementById('mesSelect').value;
+            const anio = document.getElementById('anioSelect').value;
+            form.append('mes', mes);
+            form.append('anio', anio);
 
             fetch(`/estaciones/importar/${formato}/`, {
                 method: 'POST',

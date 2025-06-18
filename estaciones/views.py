@@ -16,9 +16,9 @@ from django.contrib.auth.decorators import login_required
 from auditoria.views import registrar_evento_auditoria
 
 def listar_estaciones(request):
-    # NUEVO: Filtros de mes y año
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
+    # Asegúrate de filtrar por mes y año correctamente
     estaciones = Estacion.objects.filter(mes=mes, anio=anio)
     meses = [
         (1, "Enero"), (2, "Febrero"), (3, "Marzo"), (4, "Abril"),
@@ -50,7 +50,6 @@ def registrar_estacion(request):
         form = EstacionForm(request.POST)
         if form.is_valid():
             estacion = form.save(commit=False)
-            # Asignar mes y año desde POST o usar actual
             estacion.mes = int(request.POST.get('mes', date.today().month))
             estacion.anio = int(request.POST.get('anio', date.today().year))
             estacion.save()
@@ -68,7 +67,9 @@ def registrar_estacion(request):
 
 @login_required
 def editar_estacion(request, estacion_id):
-    estacion = get_object_or_404(Estacion, id=estacion_id)
+    mes = int(request.GET.get('mes', date.today().month))
+    anio = int(request.GET.get('anio', date.today().year))
+    estacion = get_object_or_404(Estacion, estacion_id=estacion_id, mes=mes, anio=anio)
     campos_auditar = [
         'region', 'mercado', 'nombre', 'distribuidora', 'tipo_estacion', 'estado',
         'marca', 'modelo', 'serial', 'capacidad', 'consumo', 'pac',
@@ -79,9 +80,8 @@ def editar_estacion(request, estacion_id):
         if form.is_valid():
             old_values = {field: getattr(estacion, field) for field in campos_auditar}
             estacion = form.save(commit=False)
-            # Asignar mes y año desde POST o usar actual
-            estacion.mes = int(request.POST.get('mes', date.today().month))
-            estacion.anio = int(request.POST.get('anio', date.today().year))
+            estacion.mes = mes
+            estacion.anio = anio
             estacion.save()
             new_values = {field: getattr(estacion, field) for field in campos_auditar}
             cambios = []
@@ -90,9 +90,9 @@ def editar_estacion(request, estacion_id):
                     cambios.append(f"{field}: {old_values[field]} ----> {new_values[field]}")
             # Cambia aquí el mensaje para que siempre quede claro qué se hizo
             if cambios:
-                detalles = f"Estación editada (ID: {estacion.id}, Nombre: {estacion.nombre}):\n" + "\n".join(cambios)
+                detalles = f"Estación editada (ID: {estacion.estacion_id}, Nombre: {estacion.nombre}):\n" + "\n".join(cambios)
             else:
-                detalles = f"Estación editada (ID: {estacion.id}, Nombre: {estacion.nombre}): sin cambios en campos principales."
+                detalles = f"Estación editada (ID: {estacion.estacion_id}, Nombre: {estacion.nombre}): sin cambios en campos principales."
             registrar_auditoria(
                 request,
                 accion='Editar',
@@ -126,7 +126,6 @@ def importar_estaciones(request, formato):
     if request.method == 'POST' and request.FILES.get('file'):
         file = request.FILES['file']
         errores = []
-        # NUEVO: Obtener mes y año del request (GET o POST), o usar el mes/año actual
         from datetime import date
         mes_actual = int(request.GET.get("mes") or request.POST.get("mes") or date.today().month)
         anio_actual = int(request.GET.get("anio") or request.POST.get("anio") or date.today().year)
@@ -134,52 +133,67 @@ def importar_estaciones(request, formato):
             if formato == 'excel':
                 workbook = load_workbook(file, data_only=True)
                 hoja = workbook.active
+                encabezados = [str(cell.value).strip().upper() for cell in next(hoja.iter_rows(min_row=1, max_row=1))]
+                mapeo = {
+                    "ID": "estacion_id",
+                    "REGIÓN": "region",
+                    "MERCADO": "mercado",
+                    "NOMBRE": "nombre",
+                    "DISTRIBUIDORA": "distribuidora",
+                    "TIPO DE ESTACIÓN": "tipo_estacion",
+                    "ESTADO": "estado",
+                    "MARCA": "marca",
+                    "MODELO": "modelo",
+                    "SERIAL": "serial",
+                    "CAPACIDAD2": "capacidad",
+                    "COMSUMO": "consumo",
+                    "PAC": "pac",
+                    "TANQUE BASE": "tanque_base",
+                    "TANQUE EXTERNO": "tanque_externo",
+                    "TOTAL": "total",
+                    "CAPACIDAD ANTERIOR": "capacidad_anterior",
+                    "COMPENS": "compens",
+                    "NIVEL TOTAL": "nivel_total",
+                    "5 MIN": "cinco_min",
+                    "10 MIN": "diez_min",
+                    "20 MIN": "veinte_min",
+                    "FECHA": "fecha"
+                }
+                procesados = 0
+                saltados = 0
                 for index, fila in enumerate(hoja.iter_rows(min_row=2, values_only=True), start=2):
                     try:
-                        id = fila[0]
-                        region = fila[1] or "Desconocido"
-                        mercado = fila[2] or "Desconocido"
-                        nombre = fila[3] or "Sin Nombre"
-                        distribuidora = fila[4] or "Desconocido"
-                        tipo_estacion = fila[5] or "Desconocido"
-                        estado = fila[6] or "Desconocido"
-                        marca = fila[7] or "Desconocido"
-                        modelo = fila[8] or "Desconocido"
-                        serial = fila[9] or "Desconocido"
-                        capacidad = parse_float(fila[10])
-                        consumo = parse_float(fila[11])
-                        pac = fila[12] or "Desconocido"
-                        tanque_base = parse_float(fila[13])
-                        tanque_externo = parse_float(fila[14])
-                        capacidad_anterior = parse_float(fila[16])
-                        compens = parse_float(fila[17])
-                        fecha = fila[22] or datetime.now().date()
+                        datos = {}
+                        for idx, valor in enumerate(fila):
+                            encabezado = encabezados[idx]
+                            campo = mapeo.get(encabezado)
+                            if campo:
+                                datos[campo] = valor
+                        estacion_id = datos.get('estacion_id')
+                        if not estacion_id or str(estacion_id).strip() == "":
+                            saltados += 1
+                            continue
+                        # Conversión de campos numéricos y fechas
+                        datos['capacidad'] = parse_float(datos.get('capacidad'))
+                        datos['consumo'] = parse_float(datos.get('consumo'))
+                        datos['tanque_base'] = parse_float(datos.get('tanque_base'))
+                        datos['tanque_externo'] = parse_float(datos.get('tanque_externo'))
+                        datos['capacidad_anterior'] = parse_float(datos.get('capacidad_anterior'))
+                        datos['compens'] = parse_float(datos.get('compens'))
+                        datos['fecha'] = datos.get('fecha') or datetime.now().date()
+                        datos['mes'] = mes_actual
+                        datos['anio'] = anio_actual
                         Estacion.objects.update_or_create(
-                            id=id,
-                            defaults={
-                                'region': region,
-                                'mercado': mercado,
-                                'nombre': nombre,
-                                'distribuidora': distribuidora,
-                                'tipo_estacion': tipo_estacion,
-                                'estado': estado,
-                                'marca': marca,
-                                'modelo': modelo,
-                                'serial': serial,
-                                'capacidad': capacidad,
-                                'consumo': consumo,
-                                'pac': pac,
-                                'tanque_base': tanque_base,
-                                'tanque_externo': tanque_externo,
-                                'capacidad_anterior': capacidad_anterior,
-                                'compens': compens,
-                                'fecha': fecha,
-                                'mes': mes_actual,
-                                'anio': anio_actual,
-                            }
+                            estacion_id=estacion_id,
+                            mes=mes_actual,
+                            anio=anio_actual,
+                            defaults=datos
                         )
+                        print(f"Estacion importada: estacion_id={estacion_id}, mes={mes_actual}, anio={anio_actual}")
+                        procesados += 1
                     except Exception as e:
                         errores.append({'fila': index, 'error': str(e)})
+                print(f"Estaciones procesadas: {procesados}, saltadas: {saltados}, errores: {len(errores)}")
                 registrar_evento_auditoria(request, "Importar", "Estaciones", "Importación de estaciones desde Excel")
             elif formato == 'csv':
                 decoded = file.read().decode('utf-8').splitlines()
@@ -187,7 +201,7 @@ def importar_estaciones(request, formato):
                 headers = next(reader, None)
                 for index, fila in enumerate(reader, start=2):
                     try:
-                        id = fila[0]
+                        estacion_id = fila[0]
                         region = fila[1] or "Desconocido"
                         mercado = fila[2] or "Desconocido"
                         nombre = fila[3] or "Sin Nombre"
@@ -196,7 +210,6 @@ def importar_estaciones(request, formato):
                         estado = fila[6] or "Desconocido"
                         marca = fila[7] or "Desconocido"
                         modelo = fila[8] or "Desconocido"
-                        serial = fila[9] or "Desconocido"
                         capacidad = parse_float(fila[10])
                         consumo = parse_float(fila[11])
                         pac = fila[12] or "Desconocido"
@@ -206,7 +219,9 @@ def importar_estaciones(request, formato):
                         compens = parse_float(fila[17])
                         fecha = fila[22] if len(fila) > 22 and fila[22] else datetime.now().date()
                         Estacion.objects.update_or_create(
-                            id=id,
+                            estacion_id=estacion_id,
+                            mes=mes_actual,
+                            anio=anio_actual,
                             defaults={
                                 'region': region,
                                 'mercado': mercado,
@@ -216,7 +231,6 @@ def importar_estaciones(request, formato):
                                 'estado': estado,
                                 'marca': marca,
                                 'modelo': modelo,
-                                'serial': serial,
                                 'capacidad': capacidad,
                                 'consumo': consumo,
                                 'pac': pac,
@@ -236,7 +250,7 @@ def importar_estaciones(request, formato):
                 data = json.load(file)
                 for index, fila in enumerate(data, start=2):
                     try:
-                        id = fila.get('id')
+                        estacion_id = fila.get('id') or fila.get('estacion_id')
                         region = fila.get('region', "Desconocido")
                         mercado = fila.get('mercado', "Desconocido")
                         nombre = fila.get('nombre', "Sin Nombre")
@@ -245,7 +259,6 @@ def importar_estaciones(request, formato):
                         estado = fila.get('estado', "Desconocido")
                         marca = fila.get('marca', "Desconocido")
                         modelo = fila.get('modelo', "Desconocido")
-                        serial = fila.get('serial', "Desconocido")
                         capacidad = parse_float(fila.get('capacidad'))
                         consumo = parse_float(fila.get('consumo'))
                         pac = fila.get('pac', "Desconocido")
@@ -255,7 +268,9 @@ def importar_estaciones(request, formato):
                         compens = parse_float(fila.get('compens'))
                         fecha = fila.get('fecha') or datetime.now().date()
                         Estacion.objects.update_or_create(
-                            id=id,
+                            estacion_id=estacion_id,
+                            mes=mes_actual,
+                            anio=anio_actual,
                             defaults={
                                 'region': region,
                                 'mercado': mercado,
@@ -265,7 +280,6 @@ def importar_estaciones(request, formato):
                                 'estado': estado,
                                 'marca': marca,
                                 'modelo': modelo,
-                                'serial': serial,
                                 'capacidad': capacidad,
                                 'consumo': consumo,
                                 'pac': pac,
@@ -287,7 +301,7 @@ def importar_estaciones(request, formato):
                 root = tree.getroot()
                 for index, estacion_elem in enumerate(root.findall('estacion'), start=2):
                     try:
-                        id = estacion_elem.findtext('id')
+                        estacion_id = estacion_elem.findtext('id') or estacion_elem.findtext('estacion_id')
                         region = estacion_elem.findtext('region', "Desconocido")
                         mercado = estacion_elem.findtext('mercado', "Desconocido")
                         nombre = estacion_elem.findtext('nombre', "Sin Nombre")
@@ -296,7 +310,6 @@ def importar_estaciones(request, formato):
                         estado = estacion_elem.findtext('estado', "Desconocido")
                         marca = estacion_elem.findtext('marca', "Desconocido")
                         modelo = estacion_elem.findtext('modelo', "Desconocido")
-                        serial = estacion_elem.findtext('serial', "Desconocido")
                         capacidad = parse_float(estacion_elem.findtext('capacidad'))
                         consumo = parse_float(estacion_elem.findtext('consumo'))
                         pac = estacion_elem.findtext('pac', "Desconocido")
@@ -306,7 +319,9 @@ def importar_estaciones(request, formato):
                         compens = parse_float(estacion_elem.findtext('compens'))
                         fecha = estacion_elem.findtext('fecha') or datetime.now().date()
                         Estacion.objects.update_or_create(
-                            id=id,
+                            estacion_id=estacion_id,
+                            mes=mes_actual,
+                            anio=anio_actual,
                             defaults={
                                 'region': region,
                                 'mercado': mercado,
@@ -316,7 +331,6 @@ def importar_estaciones(request, formato):
                                 'estado': estado,
                                 'marca': marca,
                                 'modelo': modelo,
-                                'serial': serial,
                                 'capacidad': capacidad,
                                 'consumo': consumo,
                                 'pac': pac,
