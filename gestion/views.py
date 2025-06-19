@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import UpdateView, CreateView
 from django.views.generic import ListView, DetailView
 from django.urls import reverse_lazy
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -25,6 +25,8 @@ from .utils import normalizar_nombre
 
 import re
 from django.core.paginator import Paginator
+import csv
+import io
 
 class GestionEstacionForm(forms.ModelForm):
     class Meta:
@@ -705,6 +707,7 @@ def importar_horas_masivo(request):
                 id_externo = str(row[id_col]).strip() if not pd.isna(row[id_col]) else id_extraido
             else:
                 id_externo = id_extraido
+            # CORREGIDO: Sintaxis del evento
             evento = str(row[evento_col]).strip() if evento_col is not None else "Motogenerador (importado masivo)"
             fecha_inicio = pd.to_datetime(row[inicio_col])
             # IGNORAR registros sin fecha de fin válida
@@ -1080,5 +1083,77 @@ def toggle_tanque_externo(request, estacion_id):
             return JsonResponse({"success": False})
     return JsonResponse({"success": False})
 
-# No es necesario modificar este archivo, solo asegúrate de registrar la vista en urls.py
-# No es necesario modificar este archivo, solo asegúrate de registrar la vista en urls.py
+def exportar_gestiones(request, formato):
+    """
+    Exporta todas las columnas del modelo GestionEstacion y campos relevantes de Estacion.
+    """
+    mes = int(request.GET.get('mes', date.today().month))
+    anio = int(request.GET.get('anio', date.today().year))
+    gestiones = GestionEstacion.objects.filter(mes=mes, anio=anio).select_related('estacion')
+
+    # Lista de campos a exportar (puedes ajustar si quieres menos/más)
+    campos_gestion = [
+        'id', 'semana', 'mes', 'anio', 'disponible',
+        'suministro_w19', 'horas_trabajo_w19', 'promedio_diario_w19',
+        'suministro_w20', 'horas_trabajo_w20', 'promedio_diario_w20',
+        'suministro_w21', 'horas_trabajo_w21', 'promedio_diario_w21',
+        'suministro_w22', 'horas_trabajo_w22', 'promedio_diario_w22',
+        'suministro_w23', 'horas_trabajo_w23', 'promedio_diario_w23',
+        'hrs_total', 'hrs_promedio_mensual', 'nivel_combustible', 'porcentaje', 'autonomia_hrs', 'necesario_100',
+        'vacio_24', 'real_24', 'vacio_36', 'real_36', 'vacio_48', 'real_48', 'vacio_72', 'real_72', 'vacio_96', 'real_96',
+        'observaciones', 'historico_alarmas', 'fecha_registro'
+    ]
+    campos_estacion = [
+        'estacion_id', 'nombre', 'region', 'mercado', 'consumo', 'tanque_base', 'tanque_externo', 'total', 'capacidad_anterior',
+        'tanque_reserva_condenado', 'tanque_base_condenado', 'tanque_externo_condenado'
+    ]
+
+    if formato == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="gestiones_{mes}_{anio}.csv"'
+        writer = csv.writer(response)
+        # Encabezados
+        encabezados = [f"estacion__{c}" for c in campos_estacion] + campos_gestion
+        writer.writerow(encabezados)
+        for g in gestiones:
+            fila = []
+            estacion = g.estacion
+            for c in campos_estacion:
+                fila.append(getattr(estacion, c, ""))
+            for c in campos_gestion:
+                valor = getattr(g, c, "")
+                # Si es un campo property, llamar si es callable
+                if callable(valor):
+                    valor = valor()
+                fila.append(valor)
+            writer.writerow(fila)
+        return response
+
+    elif formato == 'excel':
+        import pandas as pd
+        data = []
+        for g in gestiones:
+            fila = {}
+            estacion = g.estacion
+            for c in campos_estacion:
+                fila[f"estacion__{c}"] = getattr(estacion, c, "")
+            for c in campos_gestion:
+                valor = getattr(g, c, "")
+                if callable(valor):
+                    valor = valor()
+                fila[c] = valor
+            data.append(fila)
+        df = pd.DataFrame(data)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        response = HttpResponse(
+            output,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="gestiones_{mes}_{anio}.xlsx"'
+        return response
+
+    else:
+        return HttpResponse("Formato no soportado.", status=400)

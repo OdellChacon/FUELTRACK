@@ -34,4 +34,5 @@ urlpatterns = [
     path('estacion/<int:estacion_id>/toggle_tanque_reserva/', views.toggle_tanque_reserva, name='toggle_tanque_reserva'),
     path('estacion/<int:estacion_id>/toggle_tanque_base/', views.toggle_tanque_base, name='toggle_tanque_base'),
     path('estacion/<int:estacion_id>/toggle_tanque_externo/', views.toggle_tanque_externo, name='toggle_tanque_externo'),
+    path('exportar/<str:formato>/', views.exportar_gestiones, name='exportar_gestiones'),
 ]

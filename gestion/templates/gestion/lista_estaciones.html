@@ -240,7 +240,10 @@
                 input.onchange = () => handleImportGestiones(input.files[0]);
                 input.click();
             } else if (action === 'export') {
-                window.location.href = `/gestion/exportar/${format}/`;
+                // Corregido: incluir mes y año en la URL de exportación
+                const mes = document.getElementById('mesSelect').value;
+                const anio = document.getElementById('anioSelect').value;
+                window.location.href = `/gestion/exportar/${format}/?mes=${mes}&anio=${anio}`;
             }
         };
 
