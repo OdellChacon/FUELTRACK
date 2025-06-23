@@ -76,9 +76,10 @@
         </div>
     </div>
 
-    <!-- Información general -->
+    <!-- Información general + Tanques + Comentarios de Tanques en una sola grilla -->
     <div class="bg-white rounded-xl shadow p-6 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Columna 1: Datos generales -->
             <div class="space-y-4">
                 <div class="flex items-center gap-3">
                     <span class="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
@@ -117,6 +118,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Columna 2: Tanques -->
             <div class="space-y-4">
                 <!-- Tanque de Reserva (editable y condenable) -->
                 <div class="flex items-center gap-3">
@@ -126,11 +128,16 @@
                     </span>
                     <div>
                         <div class="text-xs text-gray-400 uppercase">Tanque de Reserva</div>
-                        <div class="font-semibold text-gray-800">
+                        <div class="font-semibold text-gray-800 flex items-center gap-1">
                             <input id="disponible-input" type="number" step="0.01" min="0"
                                 value="{{ gestion.disponible|floatformat:0 }}"
                                 class="w-24 text-center rounded-lg border border-gray-300 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition font-bold text-purple-700 outline-none"
                                 style="box-shadow: none;" />
+                            <span>Lts de</span>
+                            <input id="capacidad-maxima-reserva-input" type="number" step="0.01" min="0"
+                                value="{{ gestion.estacion.capacidad_maxima_reserva|default_if_none:'' }}"
+                                class="w-20 text-center rounded-lg border border-gray-300 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition font-bold text-purple-700 outline-none"
+                                style="box-shadow: none;" placeholder="Máx" />
                             <span>Lts</span>
                         </div>
                     </div>
@@ -182,10 +189,47 @@
                     </div>
                 </div>
             </div>
+            <!-- Columna 3: Comentarios de Tanques -->
+            <div class="space-y-4 flex flex-col">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bx bx-comment-detail text-2xl text-purple-600"></i>
+                    <span class="text-lg font-bold text-purple-700">Comentarios de Tanques</span>
+                </div>
+                <button id="abrirComentariosTanquesBtn" class="bg-purple-500 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1 mb-2">
+                    <i class="bx bx-message-square-add"></i> Ver Comentarios
+                </button>
+                <div class="text-xs text-gray-500 mb-2">
+                    Añade comentarios específicos sobre el estado, observaciones o incidencias de los tanques.
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Comentarios de Tanques -->
+    <div id="modalComentariosTanques" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 hidden" aria-modal="true" role="dialog">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-0 relative flex flex-col" onclick="event.stopPropagation()">
+            <!-- Cabecera -->
+            <div class="flex items-center justify-between px-6 py-4 border-b">
+                <h3 class="text-lg font-bold text-purple-700 flex items-center gap-2">
+                    <i class="bx bx-comment-detail"></i> Comentarios de Tanques
+                </h3>
+            </div>
+            <!-- Lista de comentarios -->
+            <div id="comentariosTanquesLista" class="space-y-4 max-h-72 overflow-y-auto px-6 py-4 bg-gray-50 flex-1 transition-all">
+                <div class="text-gray-400 text-center">Cargando comentarios...</div>
+            </div>
+            <!-- Formulario nuevo comentario -->
+            <form id="formNuevoComentarioTanques" class="flex flex-col gap-2 px-6 py-4 border-t bg-white">
+                <textarea id="nuevoComentarioTanquesTexto" class="border rounded-lg p-2 w-full min-h-[60px] focus:ring-2 focus:ring-purple-200 transition" placeholder="Escribe un comentario sobre los tanques..." maxlength="500"></textarea>
+                <div class="flex gap-2 items-center">
+                    <input id="nuevoComentarioTanquesAutor" type="text" class="border rounded px-2 py-1 flex-1" placeholder="Autor (opcional)" maxlength="40">
+                    <button type="submit" id="btnComentarioTanquesTxt" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+                        <i class="bx bx-send"></i> Añadir
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    
     <!-- Datos semanales y otros -->
     <div class="bg-white rounded-xl shadow p-6 mb-8">
         <h3 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
@@ -468,6 +512,7 @@ window.gestionVars = {
     tanqueReservaCondenado: {{ gestion.estacion.tanque_reserva_condenado|yesno:"true,false" }},
     tanqueBaseCondenado: {{ gestion.estacion.tanque_base_condenado|yesno:"true,false" }},
     tanqueExternoCondenado: {{ gestion.estacion.tanque_externo_condenado|yesno:"true,false" }},
+    urlActualizarCapacidadMaximaReserva: "{% url 'actualizar_capacidad_maxima_reserva' gestion.estacion.id %}",
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -631,6 +676,153 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     modal.addEventListener('click', function() {
         cerrarModalComentarios();
+    });
+
+    // --- Comentarios de Tanques ---
+    const abrirTanquesBtn = document.getElementById('abrirComentariosTanquesBtn');
+    const modalTanques = document.getElementById('modalComentariosTanques');
+    const comentariosTanquesLista = document.getElementById('comentariosTanquesLista');
+    const formNuevoTanques = document.getElementById('formNuevoComentarioTanques');
+    const textareaNuevoTanques = document.getElementById('nuevoComentarioTanquesTexto');
+    const inputAutorTanques = document.getElementById('nuevoComentarioTanquesAutor');
+    const btnComentarioTanquesTxt = document.getElementById('btnComentarioTanquesTxt');
+    let editandoTanquesId = null;
+
+    function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, function(m) {
+            return ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[m];
+        });
+    }
+    function escapeJs(text) {
+        return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+    }
+
+    function renderComentarioTanques(c) {
+        return `
+        <div class="bg-white rounded-lg p-3 shadow flex flex-col gap-1 relative group border border-gray-100 hover:border-purple-200 transition">
+            <div class="text-gray-800 break-words" id="comentario-tanques-texto-${c.id}">${escapeHtml(c.texto)}</div>
+            <div class="text-xs text-gray-500 flex gap-2 items-center">
+                <span>${c.fecha}</span>
+                ${c.autor ? `<span class="font-semibold text-purple-600">- ${escapeHtml(c.autor)}</span>` : ""}
+            </div>
+            <div class="absolute top-2 right-2 flex gap-1">
+                <button class="text-yellow-600 hover:text-yellow-800" title="Editar" onclick="editarComentarioTanques(${c.id}, '${escapeJs(c.texto)}', '${escapeJs(c.autor)}')"><i class="bx bx-edit"></i></button>
+                <button class="text-red-600 hover:text-red-800" title="Eliminar" onclick="eliminarComentarioTanques(${c.id})"><i class="bx bx-trash"></i></button>
+            </div>
+        </div>
+        `;
+    }
+
+    function cargarComentariosTanques() {
+        comentariosTanquesLista.innerHTML = '<div class="text-gray-400 text-center">Cargando comentarios...</div>';
+        fetch(`/gestion/comentarios/{{ gestion.id }}/?tipo=tanques`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.comentarios.length) {
+                    comentariosTanquesLista.innerHTML = '';
+                    data.comentarios.forEach(c => {
+                        comentariosTanquesLista.innerHTML += renderComentarioTanques(c);
+                    });
+                } else {
+                    comentariosTanquesLista.innerHTML = '<div class="text-gray-400 text-center">Sin comentarios.</div>';
+                }
+            });
+    }
+
+    window.editarComentarioTanques = function(id, texto, autor) {
+        editandoTanquesId = id;
+        textareaNuevoTanques.value = texto;
+        inputAutorTanques.value = autor;
+        textareaNuevoTanques.focus();
+        btnComentarioTanquesTxt.textContent = "Guardar";
+        document.querySelectorAll('[id^="comentario-tanques-texto-"]').forEach(el => el.classList.remove('bg-yellow-100'));
+        const el = document.getElementById('comentario-tanques-texto-' + id);
+        if (el) el.classList.add('bg-yellow-100');
+    };
+
+    window.eliminarComentarioTanques = function(id) {
+        Swal.fire({
+            title: '¿Eliminar comentario?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33'
+        }).then(result => {
+            if (result.isConfirmed) {
+                fetch(`/gestion/comentarios/{{ gestion.id }}/?tipo=tanques`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ id })
+                })
+                .then(r => r.json())
+                .then (data => {
+                    if (data.success) {
+                        cargarComentariosTanques();
+                        Swal.fire('Eliminado', '', 'success');
+                    } else {
+                        Swal.fire('Error', data.message || 'No se pudo eliminar.', 'error');
+                    }
+                });
+            }
+        });
+    };
+
+    formNuevoTanques && formNuevoTanques.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const texto = textareaNuevoTanques.value.trim();
+        const autor = inputAutorTanques.value.trim();
+        if (!texto) {
+            Swal.fire('Error', 'El comentario no puede estar vacío.', 'error');
+            return;
+        }
+        let method = editandoTanquesId ? 'PUT' : 'POST';
+        let body = editandoTanquesId
+            ? JSON.stringify({ id: editandoTanquesId, texto })
+            : JSON.stringify({ texto, autor });
+        fetch(`/gestion/comentarios/{{ gestion.id }}/?tipo=tanques`, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                textareaNuevoTanques.value = '';
+                inputAutorTanques.value = '';
+                editandoTanquesId = null;
+                btnComentarioTanquesTxt.textContent = "Añadir";
+                cargarComentariosTanques();
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo guardar.', 'error');
+            }
+        });
+    });
+
+    if (abrirTanquesBtn) {
+        abrirTanquesBtn.addEventListener('click', function() {
+            modalTanques.classList.remove('hidden');
+            cargarComentariosTanques();
+            textareaNuevoTanques.value = '';
+            inputAutorTanques.value = '';
+            editandoTanquesId = null;
+            btnComentarioTanquesTxt.textContent = "Añadir";
+            setTimeout(() => textareaNuevoTanques.focus(), 200);
+        });
+    }
+    window.cerrarModalComentariosTanques = function() {
+        modalTanques.classList.add('hidden');
+        textareaNuevoTanques.value = '';
+        inputAutorTanques.value = '';
+        editandoTanquesId = null;
+        btnComentarioTanquesTxt.textContent = "Añadir";
+        document.querySelectorAll('[id^="comentario-tanques-texto-"]').forEach(el => el.classList.remove('bg-yellow-100'));
+    };
+    modalTanques && modalTanques.addEventListener('click', function() {
+        cerrarModalComentariosTanques();
     });
 });
 </script>

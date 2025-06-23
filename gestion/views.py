@@ -932,9 +932,12 @@ def comentarios_gestion(request, gestion_id):
     POST: Añade comentario.
     PUT: Edita comentario.
     DELETE: Elimina comentario.
+    Soporta ?tipo=tanques para comentarios exclusivos de tanques.
     """
+    tipo = request.GET.get('tipo', '').strip().lower()
+    filtro_tipo = {'tipo': 'tanques'} if tipo == 'tanques' else {'tipo': 'general'}
     if request.method == 'GET':
-        comentarios = ComentarioGestion.objects.filter(gestion_id=gestion_id).order_by('-fecha')
+        comentarios = ComentarioGestion.objects.filter(gestion_id=gestion_id, **filtro_tipo).order_by('-fecha')
         data = [
             {"id": c.id, "texto": c.texto, "fecha": c.fecha.strftime("%Y-%m-%d %H:%M"), "autor": c.autor or ""}
             for c in comentarios
@@ -948,7 +951,7 @@ def comentarios_gestion(request, gestion_id):
         if not texto:
             return JsonResponse({"success": False, "message": "El comentario no puede estar vacío."})
         comentario = ComentarioGestion.objects.create(
-            gestion_id=gestion_id, texto=texto, autor=autor
+            gestion_id=gestion_id, texto=texto, autor=autor, tipo='tanques' if tipo == 'tanques' else 'general'
         )
         return JsonResponse({"success": True, "comentario": {
             "id": comentario.id,
@@ -964,7 +967,7 @@ def comentarios_gestion(request, gestion_id):
         if not comentario_id or not texto:
             return JsonResponse({"success": False, "message": "Datos incompletos."})
         try:
-            comentario = ComentarioGestion.objects.get(id=comentario_id, gestion_id=gestion_id)
+            comentario = ComentarioGestion.objects.get(id=comentario_id, gestion_id=gestion_id, **filtro_tipo)
             comentario.texto = texto
             comentario.save()
             return JsonResponse({"success": True})
@@ -975,7 +978,7 @@ def comentarios_gestion(request, gestion_id):
         body = json.loads(request.body)
         comentario_id = body.get("id")
         try:
-            comentario = ComentarioGestion.objects.get(id=comentario_id, gestion_id=gestion_id)
+            comentario = ComentarioGestion.objects.get(id=comentario_id, gestion_id=gestion_id, **filtro_tipo)
             comentario.delete()
             return JsonResponse({"success": True})
         except ComentarioGestion.DoesNotExist:
@@ -1086,63 +1089,84 @@ def toggle_tanque_externo(request, estacion_id):
 def exportar_gestiones(request, formato):
     """
     Exporta todas las columnas del modelo GestionEstacion y campos relevantes de Estacion.
+    Ahora usa los mismos nombres de columna que espera el importador.
     """
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
     gestiones = GestionEstacion.objects.filter(mes=mes, anio=anio).select_related('estacion')
 
-    # Lista de campos a exportar (puedes ajustar si quieres menos/más)
-    campos_gestion = [
-        'id', 'semana', 'mes', 'anio', 'disponible',
-        'suministro_w19', 'horas_trabajo_w19', 'promedio_diario_w19',
-        'suministro_w20', 'horas_trabajo_w20', 'promedio_diario_w20',
-        'suministro_w21', 'horas_trabajo_w21', 'promedio_diario_w21',
-        'suministro_w22', 'horas_trabajo_w22', 'promedio_diario_w22',
-        'suministro_w23', 'horas_trabajo_w23', 'promedio_diario_w23',
-        'hrs_total', 'hrs_promedio_mensual', 'nivel_combustible', 'porcentaje', 'autonomia_hrs', 'necesario_100',
-        'vacio_24', 'real_24', 'vacio_36', 'real_36', 'vacio_48', 'real_48', 'vacio_72', 'real_72', 'vacio_96', 'real_96',
-        'observaciones', 'historico_alarmas', 'fecha_registro'
+    # Nombres de columna para exportar (idénticos a los que espera el importador)
+    columnas = [
+        "ID", "REGIÓN", "MERCADO", "NOMBRE", "COMSUMO", "TANQUE BASE", "TANQUE EXTERNO", "TOTAL", "CAPACIDAD ANTERIOR",
+        "DISPONIBLE (LTS)", "NIVEL", "PORCENTAJE", "HRS TOTAL", "HRS PROMEDIO MENSUAL", "AUTONOMÍA HRS", "NECESARIO PARA 100%",
+        "24 HRS (VACIO)", "24 HRS (REAL)", "36 HRS (VACIO)", "36 HRS (REAL)", "48 HRS (VACIO)", "48 HRS (REAL)",
+        "72 HRS (VACIO)", "72 HRS (REAL)", "96 HRS (VACIO)", "96 HRS (REAL)", "OBSERVACIONES",
+        "SUMINISTRO W19", "HRS TRABAJO W19", "PROMEDIO DIARIO W19",
+        "SUMINISTRO W20", "HRS TRABAJO W20", "PROMEDIO DIARIO W20",
+        "SUMINISTRO W21", "HRS TRABAJO W21", "PROMEDIO DIARIO W21",
+        "SUMINISTRO W22", "HRS TRABAJO W22", "PROMEDIO DIARIO W22",
+        "SUMINISTRO W23", "HRS TRABAJO W23", "PROMEDIO DIARIO W23",
     ]
-    campos_estacion = [
-        'estacion_id', 'nombre', 'region', 'mercado', 'consumo', 'tanque_base', 'tanque_externo', 'total', 'capacidad_anterior',
-        'tanque_reserva_condenado', 'tanque_base_condenado', 'tanque_externo_condenado'
-    ]
+
+    def fila_gestion(g):
+        e = g.estacion
+        return [
+            e.estacion_id if e else "",
+            e.region if e else "",
+            e.mercado if e else "",
+            e.nombre if e else "",
+            e.consumo if e else "",
+            e.tanque_base if e else "",
+            e.tanque_externo if e else "",
+            e.total if e else "",
+            e.capacidad_anterior if e else "",
+            g.disponible or "",
+            g.nivel_combustible or "",
+            g.porcentaje or "",
+            g.hrs_total or "",
+            g.hrs_promedio_mensual or "",
+            g.autonomia_hrs or "",
+            g.necesario_100 or "",
+            g.vacio_24 or "",
+            g.real_24 or "",
+            g.vacio_36 or "",
+            g.real_36 or "",
+            g.vacio_48 or "",
+            g.real_48 or "",
+            g.vacio_72 or "",
+            g.real_72 or "",
+            g.vacio_96 or "",
+            g.real_96 or "",
+            g.observaciones or "",
+            g.suministro_w19 or "",
+            g.horas_trabajo_w19 or "",
+            g.promedio_diario_w19 or "",
+            g.suministro_w20 or "",
+            g.horas_trabajo_w20 or "",
+            g.promedio_diario_w20 or "",
+            g.suministro_w21 or "",
+            g.horas_trabajo_w21 or "",
+            g.promedio_diario_w21 or "",
+            g.suministro_w22 or "",
+            g.horas_trabajo_w22 or "",
+            g.promedio_diario_w22 or "",
+            g.suministro_w23 or "",
+            g.horas_trabajo_w23 or "",
+            g.promedio_diario_w23 or "",
+        ]
 
     if formato == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="gestiones_{mes}_{anio}.csv"'
         writer = csv.writer(response)
-        # Encabezados
-        encabezados = [f"estacion__{c}" for c in campos_estacion] + campos_gestion
-        writer.writerow(encabezados)
+        writer.writerow(columnas)
         for g in gestiones:
-            fila = []
-            estacion = g.estacion
-            for c in campos_estacion:
-                fila.append(getattr(estacion, c, ""))
-            for c in campos_gestion:
-                valor = getattr(g, c, "")
-                # Si es un campo property, llamar si es callable
-                if callable(valor):
-                    valor = valor()
-                fila.append(valor)
-            writer.writerow(fila)
+            writer.writerow(fila_gestion(g))
         return response
 
     elif formato == 'excel':
         import pandas as pd
-        data = []
-        for g in gestiones:
-            fila = {}
-            estacion = g.estacion
-            for c in campos_estacion:
-                fila[f"estacion__{c}"] = getattr(estacion, c, "")
-            for c in campos_gestion:
-                valor = getattr(g, c, "")
-                if callable(valor):
-                    valor = valor()
-                fila[c] = valor
-            data.append(fila)
+        data = [dict(zip(columnas, fila_gestion(g))) for g in gestiones]
         df = pd.DataFrame(data)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -1157,3 +1181,22 @@ def exportar_gestiones(request, formato):
 
     else:
         return HttpResponse("Formato no soportado.", status=400)
+
+@csrf_exempt
+def actualizar_capacidad_maxima_reserva(request, estacion_id):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            valor = data.get("capacidad_maxima_reserva")
+            estacion = Estacion.objects.get(id=estacion_id)
+            # Conversión robusta a float o None
+            if valor in [None, '', 'null']:
+                estacion.capacidad_maxima_reserva = None
+            else:
+                estacion.capacidad_maxima_reserva = float(valor)
+            estacion.save()
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    return JsonResponse({"success": False, "error": "Método no permitido"})
+    return JsonResponse({"success": False, "error": "Método no permitido"})

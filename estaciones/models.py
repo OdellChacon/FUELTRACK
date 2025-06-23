@@ -28,6 +28,7 @@ class Estacion(models.Model):
     anio = models.PositiveSmallIntegerField("Año", null=True, blank=True)
     
     # NUEVO: Estado de condena/bloqueo de tanques
+    capacidad_maxima_reserva = models.FloatField(null=True, blank=True)
     tanque_reserva_condenado = models.BooleanField(default=False)
     tanque_base_condenado = models.BooleanField(default=False)
     tanque_externo_condenado = models.BooleanField(default=False)

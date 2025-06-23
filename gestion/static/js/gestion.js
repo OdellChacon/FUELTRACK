@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const iconoTanqueReserva = document.getElementById('icono-tanque-reserva');
     const iconoTanqueBase = document.getElementById('icono-tanque-base');
     const iconoTanqueExterno = document.getElementById('icono-tanque-externo');
+    const capacidadMaximaReservaInput = document.getElementById('capacidad-maxima-reserva-input');
 
     // Datos base desde el backend (pasados como window.gestionVars)
     const capacidadAnterior = parseFloat(vars.capacidadAnterior) || 0;
@@ -242,6 +243,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     tanqueExternoInput.classList.add('border-red-500');
                     setTimeout(() => tanqueExternoInput.classList.remove('border-red-500'), 1000);
                 }
+            });
+        });
+    }
+
+    // NUEVO: Capacidad máxima tanque reserva en tiempo real
+    if (capacidadMaximaReservaInput) {
+        capacidadMaximaReservaInput.addEventListener('change', function() {
+            const valor = capacidadMaximaReservaInput.value;
+            fetch(window.gestionVars.urlActualizarCapacidadMaximaReserva, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": window.gestionVars.csrfToken
+                },
+                body: JSON.stringify({ capacidad_maxima_reserva: valor })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    capacidadMaximaReservaInput.classList.add('border-green-500');
+                    setTimeout(() => capacidadMaximaReservaInput.classList.remove('border-green-500'), 1000);
+                } else {
+                    capacidadMaximaReservaInput.classList.add('border-red-500');
+                    setTimeout(() => capacidadMaximaReservaInput.classList.remove('border-red-500'), 1000);
+                }
+            })
+            .catch(() => {
+                capacidadMaximaReservaInput.classList.add('border-red-500');
+                setTimeout(() => capacidadMaximaReservaInput.classList.remove('border-red-500'), 1000);
             });
         });
     }

@@ -265,14 +265,7 @@ class ComentarioGestion(models.Model):
     texto = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
     autor = models.CharField(max_length=100, blank=True, null=True)  # Opcional: para identificar al usuario
+    tipo = models.CharField(max_length=20, default='general')  # 'general' o 'tanques'
 
     def __str__(self):
         return f"Comentario en {self.gestion} - {self.fecha:%Y-%m-%d %H:%M}"
-
-class Estacion(models.Model):
-    # ...existing code...
-    # Añade estos campos al modelo Estacion
-    tanque_reserva_condenado = models.BooleanField(default=False)
-    tanque_base_condenado = models.BooleanField(default=False)
-    tanque_externo_condenado = models.BooleanField(default=False)
-    # ...existing code...
